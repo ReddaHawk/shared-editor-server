@@ -18,7 +18,11 @@ HEADERS += \
 
 FORMS += \
     mainwindow.ui
+
 include(network/network.pri)
+include(network/messages/messages.pri)
+include(common/common.pri)
+
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin

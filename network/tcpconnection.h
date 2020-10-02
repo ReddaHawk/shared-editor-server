@@ -4,6 +4,9 @@
 #include <QObject>
 #include <QDebug>
 #include <QTcpSocket>
+#include <QDataStream>
+#include "messages/header.h"
+#include "messages/message.h"
 
 class TcpConnection : public QObject
 {
@@ -12,11 +15,16 @@ public:
     explicit TcpConnection(QObject *parent = nullptr);
     ~TcpConnection();
 
-    virtual void setSocket(QTcpSocket *socket);
+    void setSocket(QTcpSocket *socket);
 
-protected:
     QTcpSocket *m_socket;
     QTcpSocket* getSocket();
+    bool userLogged;
+    quint32 userId;
+
+protected:
+
+
 signals:
 
 public slots:

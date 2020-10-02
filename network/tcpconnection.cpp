@@ -48,8 +48,35 @@ void TcpConnection::disconnected()
 void TcpConnection::readyRead()
 {
     if(!sender()) return;
-    qDebug() << this << " readyRead "<< sender();
-    qDebug() << "Socket has received: " << m_socket->readAll();
+    QDataStream socketStream(m_socket);
+
+    socketStream.setVersion(QDataStream::Qt_5_12);
+    
+    // Start to read the message
+    socketStream.startTransaction();
+
+    Header header;
+
+    socketStream >> header; // try to read packet atomically
+    /*
+    switch(header.getType())
+    {
+        case MessageType::C_LOGIN:
+        UserMessage
+    }
+    */
+    if(header.getType() == MessageType::C_LOGIN)
+    {
+        UserMessage message;
+        qDebug() << "Login message";
+        qDebug() << this << " readyRead "<< sender();
+        socketStream >> message;
+        qDebug() << message.toString();
+       // qDebug() << "Socket has received: " << m_socket->readAll();
+    }
+    if (!socketStream.commitTransaction())
+        return;     // wait for more data
+
 }
 
 // Write data in socket
