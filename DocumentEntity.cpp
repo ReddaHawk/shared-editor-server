@@ -1,14 +1,15 @@
 #include "DocumentEntity.h"
 
-DocumentEntity::DocumentEntity(std::string path)
+
+DocumentEntity::DocumentEntity(QString path)
 {
     this->path=path;
     this->date=getCurrentDate();
 }
 
-
+/*
 //Get the current date in UTC format
-char* DocumentEntity::getCurrentDate(){
+QChar* DocumentEntity::getCurrentDate(){
     // Declaring argument for time()
     std::time_t tt;
 
@@ -27,8 +28,14 @@ char* DocumentEntity::getCurrentDate(){
 
     return asctime(ti);
 }
+*/
+
+QString DocumentEntity::getCurrentDate(){
+    QDateTime dt = QDateTime::currentDateTimeUtc();
+    return dt.toString();
+}
 
 /*Get the document creation date*/
-char* DocumentEntity::getDate(){
+QString DocumentEntity::getDate(){
     return date;
 }

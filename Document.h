@@ -1,19 +1,23 @@
 #ifndef DOCUMENT_H
 #define DOCUMENT_H
 
-#include <string>
 #include <vector>
-#include <DocumentEntity.h>
+#include <QObject>
+#include <QString>
 
-class Document
+#include "DocumentEntity.h"
+
+class Document : public QObject
 {
+    Q_OBJECT
+
 private:
     int ownerId;
     int documentId = 0;
-    std::string name;
+    QString name;
     std::vector<int> connectedUsers;
-    char* date; //document creation date
-    std::string text;
+    QString date; //document creation date
+    QString text;
     DocumentEntity DocEnt;
 
 public:
@@ -22,12 +26,12 @@ public:
 
     int getOwnerId();
     int getDocumentId();
-    std::string getName();
+    QString getName();
     std::vector<int> getConnectedUsers();
-    char* getDate();
-    std::string getText();
+    QString getDate();
+    QString getText();
 
-    void setName (std::string newName);
+    void setName (QString newName);
 };
 
 #endif // DOCUMENT_H

@@ -17,11 +17,11 @@ int Document::getDocumentId() {
     return documentId;
 }
 
-std::string Document::getName(){
+QString Document::getName(){
     return name;
 }
 
-void Document::setName(std::string newName){
+void Document::setName(QString newName){
     this->name = newName;
 }
 
@@ -30,11 +30,11 @@ std::vector<int> Document::getConnectedUsers(){
 }
 
 /*Get the document creation date*/
-char* Document::getDate(){
+QString Document::getDate(){
     return date;
 }
 
 
-std::string Document::getText(){
+QString Document::getText(){
     return text;
 }

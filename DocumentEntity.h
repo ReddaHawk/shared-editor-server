@@ -2,20 +2,25 @@
 #define DOCUMENTENTITY_H
 
 #include <ctime>
-#include <string>
+#include <QString>
+#include <QChar>
+#include <QObject>
+#include <QDateTime>
 
-class DocumentEntity
+class DocumentEntity: public QObject
 {
+    Q_OBJECT
+
 private:
-    std::string path;
-    char* date;
+    QString path;
+    QString date;
 
 public:
-    DocumentEntity();
-   DocumentEntity(std::string path);
+   DocumentEntity();
+   DocumentEntity(QString path);
 
-    char* getCurrentDate();
-    char* getDate();
+    QString getCurrentDate();
+    QString getDate();
 };
 
 #endif // DOCUMENTENTITY_H
