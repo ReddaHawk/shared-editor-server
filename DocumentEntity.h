@@ -16,8 +16,7 @@ private:
     QString date;
 
 public:
-   DocumentEntity();
-   DocumentEntity(QString path);
+    DocumentEntity(QString path);
 
     QString getCurrentDate();
     QString getDate();
