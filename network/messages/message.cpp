@@ -22,5 +22,5 @@ QDataStream &UserMessage::unserialize(QDataStream &stream) {
 
 QString UserMessage::toString()
 {
-    return name + " " + surname;
+    return name + " " + surname + " " + prova;
 }

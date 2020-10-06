@@ -18,7 +18,7 @@ public:
     
     Header();
     
-    Header(MessageType &type);
+    Header(MessageType type);
     
     QDataStream &serialize(QDataStream &stream) const override;
     
@@ -26,6 +26,7 @@ public:
     
     MessageType &getType();
     
+    void setType(MessageType messageType);
 
 };
 

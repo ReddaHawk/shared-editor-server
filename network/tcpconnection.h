@@ -7,6 +7,9 @@
 #include <QDataStream>
 #include "messages/header.h"
 #include "messages/message.h"
+#include "user.h"
+#include "db.h"
+#include "messages/messageType.h"
 
 class TcpConnection : public QObject
 {

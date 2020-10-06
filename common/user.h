@@ -4,10 +4,11 @@
 
 #include <QCryptographicHash>
 #include <QtCore>
-class User //: public Serialization
+
+class User : public Serialization
 {
 public:
-/*
+
       User(QString username, QString name, QString surname, QString email,
            const QString &password, QByteArray image);
 
@@ -47,7 +48,7 @@ private:
         pswNsalt.append(username) ;
         return QCryptographicHash::hash(pswNsalt, QCryptographicHash::Sha256).toHex();
     }
-*/
+
 };
 
 #endif // USER_H

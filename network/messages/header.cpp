@@ -1,6 +1,6 @@
 #include "header.h"
 
-Header::Header(MessageType& messageType) : type(messageType)
+Header::Header(MessageType messageType) : type(messageType)
 {
 
 }
@@ -20,6 +20,12 @@ QDataStream & Header::unserialize(QDataStream &stream) {
 
 MessageType &Header::getType() {
   return type;
+}
+
+void Header::setType(MessageType messageType)
+{
+    type = messageType;
+    return;
 }
 
 

@@ -26,8 +26,6 @@ MainWindow::MainWindow(QWidget *parent)
         ui->lineEdit_username->setText("root");
         ui->lineEdit_password->setText("mypass");
         ui->lineEdit_password->setEchoMode(QLineEdit::Password);
-
-
     }
 
 }
@@ -55,7 +53,6 @@ void MainWindow::on_pushButton_logindb_clicked()
     {
         QMessageBox::critical(this,"dbError",err.text());
         //this->close();
-
     }
     else
         {

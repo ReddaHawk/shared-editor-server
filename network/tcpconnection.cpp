@@ -8,6 +8,7 @@ TcpConnection::TcpConnection(QObject *parent) : QObject(parent)
 TcpConnection::~TcpConnection()
 {
     qDebug() << this << "Destroyed";
+    m_socket->close();
     
 }
 
@@ -32,7 +33,6 @@ QTcpSocket *TcpConnection::getSocket()
 
 void TcpConnection::connected()
 {
-    qDebug() << "Connected: sender exists or not?";
     if(!sender()) return;
     qDebug() << this << " connected "<< sender();
     m_socket->write("Hello world");
@@ -58,13 +58,40 @@ void TcpConnection::readyRead()
     Header header;
 
     socketStream >> header; // try to read packet atomically
-    /*
+
     switch(header.getType())
     {
-        case MessageType::C_LOGIN:
-        UserMessage
+    case MessageType::C_LOGIN: {
+
+        User userMessage;
+        socketStream >> userMessage;
+        QSqlQuery q;
+
+        int ret = checkCredentials(q,userMessage);
+        QDataStream replyStream(m_socket);
+        replyStream.setVersion(QDataStream::Qt_5_12);
+        Header headerResponse;
+        if (loginUser(userMessage)) {
+             headerResponse.setType(MessageType::S_LOGIN_OK);
+        } else
+            headerResponse.setType(MessageType::S_LOGIN_KO);
+        replyStream << headerResponse;
+        break;
     }
-    */
+    case MessageType::C_REGISTER:{
+        User userMessage;
+        socketStream >> userMessage;
+        QSqlQuery q;
+        
+
+        signUser(userMessage);
+        
+
+    }
+
+    }
+
+    /*
     if(header.getType() == MessageType::C_LOGIN)
     {
         UserMessage message;
@@ -72,8 +99,9 @@ void TcpConnection::readyRead()
         qDebug() << this << " readyRead "<< sender();
         socketStream >> message;
         qDebug() << message.toString();
-       // qDebug() << "Socket has received: " << m_socket->readAll();
+        //qDebug() << "Socket has received: " << m_socket->readAll();
     }
+    */
     if (!socketStream.commitTransaction())
         return;     // wait for more data
 
@@ -98,3 +126,5 @@ void TcpConnection::error(QAbstractSocket::SocketError socketError)
     qDebug() << this << " error "<< sender() << " error " << socketError;
 
 }
+
+

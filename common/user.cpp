@@ -1,12 +1,10 @@
 #include "user.h"
-/*
+
 User::User(QString username, QString name, QString surname, QString email,
            const QString &password, QByteArray image)
     : username(std::move(username)), name(std::move(name)),
       surname(std::move(surname)), email(std::move(email)),
-      password(QCryptographicHash::hash(password.toUtf8(),
-                                        QCryptographicHash::Sha512)
-                   .toHex()),
+      password(hashPassword(username,password)),
       image(std::move(image)) {}
 
 User::User(QString username, QString name, QString surname, QString email,
@@ -16,8 +14,7 @@ User::User(QString username, QString name, QString surname, QString email,
       image(std::move(image)) {}
 
 User::User(QString username, QString password)
-    : username(std::move(username)), password(QCryptographicHash::hash(password.toUtf8(),
-                                                                       QCryptographicHash::Sha512).toHex()) {
+    : username(std::move(username)), password(hashPassword(username,password)) {
 }
 
 QString &User::getUsername() { return username; }
@@ -43,4 +40,4 @@ QDataStream &User::unserialize(QDataStream &stream) {
   return stream;
 }
 
-*/
+
