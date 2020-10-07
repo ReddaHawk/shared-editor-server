@@ -10,10 +10,14 @@ CONFIG += c++11
 
 SOURCES += \
     db.cpp \
+    Document.cpp \
+    DocumentEntity.cpp \
     main.cpp \
     mainwindow.cpp
 
 HEADERS += \
+    Document.h \
+    DocumentEntity.h \
     db.h \
     mainwindow.h
 
