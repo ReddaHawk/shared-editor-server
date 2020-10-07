@@ -13,8 +13,8 @@ User::User(QString username, QString name, QString surname, QString email,
       surname(std::move(surname)), email(std::move(email)),
       image(std::move(image)) {}
 
-User::User(QString username, QString password)
-    : username(std::move(username)), password(hashPassword(username,password)) {
+User::User(QString email, QString password)
+    : email(std::move(email)), password(hashPassword(username,password)) {
 }
 
 QString &User::getUsername() { return username; }
@@ -29,6 +29,10 @@ QString &User::getPassword() { return password; }
 
 QByteArray &User::getImage() { return image; }
 
+QString User::toString()
+{
+    return "username: "+ username  + " name: "+name+" surname: "+ surname+" email: "+ email + " password: "+ password + " image: "+image  ;
+}
 
 QDataStream &User::serialize(QDataStream &stream) const {
   stream << username << password << email << name << surname << image;

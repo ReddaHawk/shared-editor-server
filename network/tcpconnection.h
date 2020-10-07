@@ -14,6 +14,7 @@
 class TcpConnection : public QObject
 {
     Q_OBJECT
+    QSqlDatabase db;
 public:
     explicit TcpConnection(QObject *parent = nullptr);
     ~TcpConnection();

@@ -14,7 +14,7 @@ public:
 
       User(QString username, QString name, QString surname, QString email,  QByteArray image);
 
-      User(QString username, QString password);
+      User(QString email, QString password);
 
       User() = default;
 
@@ -34,12 +34,14 @@ public:
 
       QByteArray &getImage();
 
+      QString toString();
+
 private:
 
-    QString username;
-    QString email;
+    QString username;  
     QString name;
     QString surname;
+    QString email;
     QString password;
     QByteArray image;
 

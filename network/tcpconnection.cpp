@@ -3,12 +3,15 @@
 TcpConnection::TcpConnection(QObject *parent) : QObject(parent)
 {
     qDebug() << this << "Created";
+    db = startDb();
+
 }
 
 TcpConnection::~TcpConnection()
 {
     qDebug() << this << "Destroyed";
     m_socket->close();
+    db.close();
     
 }
 
@@ -59,34 +62,66 @@ void TcpConnection::readyRead()
 
     socketStream >> header; // try to read packet atomically
 
+    QDataStream replyStream(m_socket);
+    replyStream.setVersion(QDataStream::Qt_5_12);
+    Header headerResponse;
     switch(header.getType())
     {
     case MessageType::C_LOGIN: {
 
         User userMessage;
         socketStream >> userMessage;
-        QSqlQuery q;
-
-        int ret = checkCredentials(q,userMessage);
-        QDataStream replyStream(m_socket);
-        replyStream.setVersion(QDataStream::Qt_5_12);
-        Header headerResponse;
-        if (loginUser(userMessage)) {
+       qDebug() << "Login test: "<< userMessage.toString();
+        if(db.open()){
+        qDebug()<< "DB opened";
+        userMessage = User(userMessage.getEmail(),userMessage.getPassword());
+        if (loginUser(db,userMessage)) {
+            qDebug()<< "Login ok ";
              headerResponse.setType(MessageType::S_LOGIN_OK);
+             userLogged = true;
+             replyStream << headerResponse << userMessage;
         } else
+        {
+            qDebug()<< "Login ko";
             headerResponse.setType(MessageType::S_LOGIN_KO);
-        replyStream << headerResponse;
+            replyStream << headerResponse;
+        }
+        } else {
+            qDebug() << "Error DB " << db.lastError();
+            // Error db
+            headerResponse.setType(MessageType::S_ERROR_DB);
+            replyStream << headerResponse;
+        }
         break;
     }
     case MessageType::C_REGISTER:{
         User userMessage;
+
         socketStream >> userMessage;
-        QSqlQuery q;
-        
+        if(db.open()){
+            qDebug() << "REGISTER: " << userMessage.toString();
 
-        signUser(userMessage);
-        
+            userMessage = User(userMessage.getUsername(),userMessage.getName(),userMessage.getSurname(),
+                               userMessage.getEmail(),userMessage.getPassword(),userMessage.getImage());
+            if(signUser(db,userMessage))
+            {
+                qDebug() << "REG OK";
+                headerResponse.setType(MessageType::S_REGISTER_OK);
+                userLogged=true;
+                replyStream << headerResponse;
+            } else
+            {
+                qDebug() << "REG KO";
 
+                headerResponse.setType(MessageType::S_REGISTER_KO);
+                replyStream << headerResponse;
+
+            }
+        } else {
+            // Error db
+            headerResponse.setType(MessageType::S_ERROR_DB);
+            replyStream << headerResponse;
+        }
     }
 
     }

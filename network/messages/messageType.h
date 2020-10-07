@@ -1,9 +1,8 @@
 #ifndef MESSAGETYPE_H
 #define MESSAGETYPE_H
-
-#endif // MESSAGETYPE_H
-
 #include <QtCore>
+
+
 // C = client
 // S = server
 // B = client-server
@@ -19,5 +18,8 @@ enum class MessageType : qint32 {
     S_LOGIN_KO = -2,
     S_REGISTER_OK = -3,
     S_REGISTER_KO = -4,
+    S_ERROR_DB = -5
 
 };
+
+#endif // MESSAGETYPE_H
