@@ -1,8 +1,11 @@
 #include "DocumentEntity.h"
 
 
-DocumentEntity::DocumentEntity(QString path)
+DocumentEntity::DocumentEntity(int ownerId, int documentId, QString name, QString path)
 {
+    this->ownerId = ownerId;
+    this->documentId = documentId;
+    this->name = name;
     this->path=path;
     this->date=getCurrentDate();
 }
