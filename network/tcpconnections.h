@@ -16,7 +16,7 @@ public:
     explicit TcpConnections(QObject *parent = nullptr);
     ~TcpConnections();
 
-    virtual int count();
+    int count();
 
 protected:
 QMap<QTcpSocket*, TcpConnection*> m_connections;

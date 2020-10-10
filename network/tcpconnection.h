@@ -14,7 +14,6 @@
 class TcpConnection : public QObject
 {
     Q_OBJECT
-    QSqlDatabase db;
 public:
     explicit TcpConnection(QObject *parent = nullptr);
     ~TcpConnection();
@@ -23,21 +22,24 @@ public:
 
     QTcpSocket *m_socket;
     QTcpSocket* getSocket();
-    bool userLogged;
+
     quint32 userId;
 
-protected:
+private:
+    QSqlDatabase db;
+    User m_user;
+    bool userLogged;
 
 
 signals:
 
 public slots:
-    virtual void connected();
-    virtual void disconnected();
-    virtual void readyRead();
-    virtual void bytesWritten(qint64 bytes);
-    virtual void stateChanged(QAbstractSocket::SocketState socketState);
-    virtual void error(QAbstractSocket::SocketError socketError);
+    void connected();
+    void disconnected();
+    void readyRead();
+    void bytesWritten(qint64 bytes);
+    void stateChanged(QAbstractSocket::SocketState socketState);
+    void error(QAbstractSocket::SocketError socketError);
 
 };
 

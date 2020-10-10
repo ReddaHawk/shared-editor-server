@@ -13,6 +13,10 @@ User::User(QString username, QString name, QString surname, QString email,
       surname(std::move(surname)), email(std::move(email)),
       image(std::move(image)) {}
 
+User::User(QString username, QString name, QString surname, QString email)
+    : username(std::move(username)), name(std::move(name)),
+      surname(std::move(surname)), email(std::move(email)) {}
+
 User::User(QString email, QString password)
     : email(std::move(email)), password(hashPassword(username,password)) {
 }

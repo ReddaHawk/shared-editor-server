@@ -16,9 +16,20 @@ enum class MessageType : qint32 {
     C_REGISTER = 2,
     S_LOGIN_OK = 3,
     S_LOGIN_KO = -2,
-    S_REGISTER_OK = -3,
+    S_REGISTER_OK = 4,
     S_REGISTER_KO = -4,
-    S_ERROR_DB = -5
+    S_ERROR_DB = -5,
+    C_UPD_IMG = 5,
+    C_UPD_PASS = 6,
+    C_UPD_NAME = 7,
+    C_UPD_SURN = 8,
+    S_UPD_OK = 9,
+    // Input ko is useful to notify wrong input params.
+    S_INPUT_KO=-6,
+    // Update ko is useful for the update passw func
+    // If user instert wrong old passw
+    S_UPD_KO = -7,
+    S_NOT_LOGGED= -8,
 
 };
 

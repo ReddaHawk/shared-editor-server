@@ -38,7 +38,7 @@ void TcpConnection::connected()
 {
     if(!sender()) return;
     qDebug() << this << " connected "<< sender();
-    m_socket->write("Hello world");
+
 }
 
 void TcpConnection::disconnected()
@@ -71,14 +71,17 @@ void TcpConnection::readyRead()
 
         User userMessage;
         socketStream >> userMessage;
-       qDebug() << "Login test: "<< userMessage.toString();
+        if (!socketStream.commitTransaction())
+            return;
+        qDebug() << "Login test: "<< userMessage.toString();
         if(db.open()){
         qDebug()<< "DB opened";
         userMessage = User(userMessage.getEmail(),userMessage.getPassword());
         if (loginUser(db,userMessage)) {
-            qDebug()<< "Login ok ";
+             qDebug()<< "User "<<userMessage.getEmail()<<" has logged correctly";
              headerResponse.setType(MessageType::S_LOGIN_OK);
              userLogged = true;
+             m_user = User(userMessage.getUsername(),userMessage.getName(),userMessage.getSurname(),userMessage.getEmail());
              replyStream << headerResponse << userMessage;
         } else
         {
@@ -86,6 +89,7 @@ void TcpConnection::readyRead()
             headerResponse.setType(MessageType::S_LOGIN_KO);
             replyStream << headerResponse;
         }
+        db.close();
         } else {
             qDebug() << "Error DB " << db.lastError();
             // Error db
@@ -98,8 +102,11 @@ void TcpConnection::readyRead()
         User userMessage;
 
         socketStream >> userMessage;
+        if (!socketStream.commitTransaction())
+            return;
+        qDebug()<< "received: " << userMessage.getImage().size();
         if(db.open()){
-            qDebug() << "REGISTER: " << userMessage.toString();
+            //qDebug() << "REGISTER: " << userMessage.toString();
 
             userMessage = User(userMessage.getUsername(),userMessage.getName(),userMessage.getSurname(),
                                userMessage.getEmail(),userMessage.getPassword(),userMessage.getImage());
@@ -108,21 +115,168 @@ void TcpConnection::readyRead()
                 qDebug() << "REG OK";
                 headerResponse.setType(MessageType::S_REGISTER_OK);
                 userLogged=true;
+                m_user = User(userMessage.getUsername(),userMessage.getName(),userMessage.getSurname(),userMessage.getEmail());
                 replyStream << headerResponse;
             } else
             {
                 qDebug() << "REG KO";
-
                 headerResponse.setType(MessageType::S_REGISTER_KO);
                 replyStream << headerResponse;
 
             }
+            db.close();
+        }
+        else {
+            // Error db
+            headerResponse.setType(MessageType::S_ERROR_DB);
+            replyStream << headerResponse;
+        }
+        break;
+    }
+    case MessageType::C_UPD_IMG:{
+        if(!userLogged){
+            headerResponse.setType(MessageType::S_NOT_LOGGED);
+            replyStream << headerResponse;
+            break;
+        }
+        User userMessage;
+        socketStream >> userMessage;
+        if (!socketStream.commitTransaction())
+            return;
+        qDebug()<< "Received new image with size: " << userMessage.getImage().size();
+        if(db.open()){
+            if(updateImgUser(db,m_user,userMessage.getImage()))
+            {
+                qDebug() << "UPD IMG OK";
+                headerResponse.setType(MessageType::S_UPD_OK);
+                replyStream << headerResponse;
+            } else
+            {
+                qDebug() << "UPD IMG KO";
+                headerResponse.setType(MessageType::S_UPD_KO);
+                replyStream << headerResponse;
+            }
+          db.close();
         } else {
             // Error db
             headerResponse.setType(MessageType::S_ERROR_DB);
             replyStream << headerResponse;
         }
+
+        break;
     }
+    case MessageType::C_UPD_NAME:{
+        if(!userLogged){
+            headerResponse.setType(MessageType::S_NOT_LOGGED);
+            replyStream << headerResponse;
+            break;
+        }
+        User userMessage;
+        socketStream >> userMessage;
+        if (!socketStream.commitTransaction())
+            return;
+        qDebug()<< "Received new name " << userMessage.getName();
+        if(db.open()){
+            if(updateNameUser(db,m_user,userMessage.getName()))
+            {
+                qDebug() << "UPD Name OK";
+                headerResponse.setType(MessageType::S_UPD_OK);
+                m_user = User(m_user.getUsername(),userMessage.getName(),m_user.getSurname(),m_user.getEmail());
+                replyStream << headerResponse;
+            } else
+            {
+                qDebug() << "UPD Name KO";
+                headerResponse.setType(MessageType::S_UPD_KO);
+                replyStream << headerResponse;
+            }
+          db.close();
+        } else {
+            // Error db
+            headerResponse.setType(MessageType::S_ERROR_DB);
+            replyStream << headerResponse;
+        }
+
+        break;
+    }
+    case MessageType::C_UPD_SURN:{
+        if(!userLogged){
+            headerResponse.setType(MessageType::S_NOT_LOGGED);
+            replyStream << headerResponse;
+            break;
+        }
+        User userMessage;
+        socketStream >> userMessage;
+        if (!socketStream.commitTransaction())
+            return;
+        qDebug()<< "Received new surname " << userMessage.getName();
+        if(db.open()){
+            if(updateSurnameUser(db,m_user,userMessage.getSurname()))
+            {
+                qDebug() << "UPD Surname OK";
+                m_user = User(m_user.getUsername(),m_user.getName(),userMessage.getSurname(),m_user.getEmail());
+                headerResponse.setType(MessageType::S_UPD_OK);
+                replyStream << headerResponse;
+            } else
+            {
+                qDebug() << "UPD Surname KO";
+                headerResponse.setType(MessageType::S_UPD_KO);
+                replyStream << headerResponse;
+            }
+          db.close();
+        } else {
+            // Error db
+            headerResponse.setType(MessageType::S_ERROR_DB);
+            replyStream << headerResponse;
+        }
+
+        break;
+    }
+        // Old password is sent over email field. This allow us to not create a new class for updt psw.
+    case MessageType::C_UPD_PASS:{
+        if(!userLogged){
+            headerResponse.setType(MessageType::S_NOT_LOGGED);
+            replyStream << headerResponse;
+            break;
+        }
+        User userMessage;
+        socketStream >> userMessage;
+        if (!socketStream.commitTransaction())
+            return;
+        qDebug()<< "Received new name " << userMessage.getName();
+        if(db.open()){
+            // Create tmp user to see if old psw is correct.
+            User tmp(m_user.getEmail(),userMessage.getEmail());
+            if(loginUser(db,tmp))
+            {
+                // Hash password
+                tmp = User(m_user.getEmail(),userMessage.getPassword());
+                if(updatePasswordUser(db,m_user,tmp.getPassword()))
+                {
+                    qDebug() << "UPD psw OK";
+                    headerResponse.setType(MessageType::S_UPD_OK);
+                    replyStream << headerResponse;
+                } else
+                {
+                    qDebug() << "UPD psw KO";
+                    headerResponse.setType(MessageType::S_UPD_KO);
+                    replyStream << headerResponse;
+                }
+            } else
+            {
+                qDebug() << "Old psw not correct";
+                headerResponse.setType(MessageType::S_INPUT_KO);
+                replyStream << headerResponse;
+            }
+          db.close();
+        } else {
+            // Error db
+            headerResponse.setType(MessageType::S_ERROR_DB);
+            replyStream << headerResponse;
+        }
+
+        break;
+    }
+
 
     }
 
@@ -137,8 +291,7 @@ void TcpConnection::readyRead()
         //qDebug() << "Socket has received: " << m_socket->readAll();
     }
     */
-    if (!socketStream.commitTransaction())
-        return;     // wait for more data
+       // wait for more data
 
 }
 
