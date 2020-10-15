@@ -9,8 +9,6 @@
 
 class DocumentDTO : public Serialization
 {
-    Q_OBJECT
-
 private:
     int ownerId;
     int documentId = 0;
