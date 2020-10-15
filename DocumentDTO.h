@@ -18,11 +18,9 @@ private:
     std::vector<int> connectedUsers;
     QString date; //document creation date
     QString text;
-    DocumentEntity DocEnt;
 
 public:
     Document(int ownerId,std::vector<int> &connectedUsers, DocumentEntity DocEnt);
-    ~Document();
 
     int getOwnerId();
     int getDocumentId();

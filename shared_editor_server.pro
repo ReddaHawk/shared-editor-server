@@ -9,12 +9,8 @@ CONFIG += c++11
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
-<<<<<<< Updated upstream
-    Document.cpp \
-=======
     DocumentDTO.cpp \
     db.cpp \
->>>>>>> Stashed changes
     DocumentEntity.cpp \
     main.cpp \
     mainwindow.cpp
@@ -27,7 +23,11 @@ HEADERS += \
 
 FORMS += \
     mainwindow.ui
+
 include(network/network.pri)
+include(network/messages/messages.pri)
+include(common/common.pri)
+
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin

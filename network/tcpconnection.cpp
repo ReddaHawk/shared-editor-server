@@ -3,11 +3,15 @@
 TcpConnection::TcpConnection(QObject *parent) : QObject(parent)
 {
     qDebug() << this << "Created";
+    db = startDb();
+
 }
 
 TcpConnection::~TcpConnection()
 {
     qDebug() << this << "Destroyed";
+    m_socket->close();
+    db.close();
     
 }
 
@@ -32,7 +36,6 @@ QTcpSocket *TcpConnection::getSocket()
 
 void TcpConnection::connected()
 {
-    qDebug() << "Connected: sender exists or not?";
     if(!sender()) return;
     qDebug() << this << " connected "<< sender();
     m_socket->write("Hello world");
@@ -48,8 +51,95 @@ void TcpConnection::disconnected()
 void TcpConnection::readyRead()
 {
     if(!sender()) return;
-    qDebug() << this << " readyRead "<< sender();
-    qDebug() << "Socket has received: " << m_socket->readAll();
+    QDataStream socketStream(m_socket);
+
+    socketStream.setVersion(QDataStream::Qt_5_12);
+    
+    // Start to read the message
+    socketStream.startTransaction();
+
+    Header header;
+
+    socketStream >> header; // try to read packet atomically
+
+    QDataStream replyStream(m_socket);
+    replyStream.setVersion(QDataStream::Qt_5_12);
+    Header headerResponse;
+    switch(header.getType())
+    {
+    case MessageType::C_LOGIN: {
+
+        User userMessage;
+        socketStream >> userMessage;
+       qDebug() << "Login test: "<< userMessage.toString();
+        if(db.open()){
+        qDebug()<< "DB opened";
+        userMessage = User(userMessage.getEmail(),userMessage.getPassword());
+        if (loginUser(db,userMessage)) {
+            qDebug()<< "Login ok ";
+             headerResponse.setType(MessageType::S_LOGIN_OK);
+             userLogged = true;
+             replyStream << headerResponse << userMessage;
+        } else
+        {
+            qDebug()<< "Login ko";
+            headerResponse.setType(MessageType::S_LOGIN_KO);
+            replyStream << headerResponse;
+        }
+        } else {
+            qDebug() << "Error DB " << db.lastError();
+            // Error db
+            headerResponse.setType(MessageType::S_ERROR_DB);
+            replyStream << headerResponse;
+        }
+        break;
+    }
+    case MessageType::C_REGISTER:{
+        User userMessage;
+
+        socketStream >> userMessage;
+        if(db.open()){
+            qDebug() << "REGISTER: " << userMessage.toString();
+
+            userMessage = User(userMessage.getUsername(),userMessage.getName(),userMessage.getSurname(),
+                               userMessage.getEmail(),userMessage.getPassword(),userMessage.getImage());
+            if(signUser(db,userMessage))
+            {
+                qDebug() << "REG OK";
+                headerResponse.setType(MessageType::S_REGISTER_OK);
+                userLogged=true;
+                replyStream << headerResponse;
+            } else
+            {
+                qDebug() << "REG KO";
+
+                headerResponse.setType(MessageType::S_REGISTER_KO);
+                replyStream << headerResponse;
+
+            }
+        } else {
+            // Error db
+            headerResponse.setType(MessageType::S_ERROR_DB);
+            replyStream << headerResponse;
+        }
+    }
+
+    }
+
+    /*
+    if(header.getType() == MessageType::C_LOGIN)
+    {
+        UserMessage message;
+        qDebug() << "Login message";
+        qDebug() << this << " readyRead "<< sender();
+        socketStream >> message;
+        qDebug() << message.toString();
+        //qDebug() << "Socket has received: " << m_socket->readAll();
+    }
+    */
+    if (!socketStream.commitTransaction())
+        return;     // wait for more data
+
 }
 
 // Write data in socket
@@ -71,3 +161,5 @@ void TcpConnection::error(QAbstractSocket::SocketError socketError)
     qDebug() << this << " error "<< sender() << " error " << socketError;
 
 }
+
+

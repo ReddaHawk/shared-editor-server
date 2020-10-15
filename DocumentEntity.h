@@ -20,12 +20,7 @@ private:
 
 
 public:
-<<<<<<< Updated upstream
-   DocumentEntity();
-   DocumentEntity(QString path);
-=======
     DocumentEntity(int ownerId, int documentId, QString name, QString path);
->>>>>>> Stashed changes
 
     QString getCurrentDate();
     QString getDate();

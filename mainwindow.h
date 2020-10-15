@@ -8,6 +8,7 @@
 #include <QDebug>
 #include <QSqlError>
 #include <QStackedWidget>
+#include "db.h"
 #include "network/tcpserver.h"
 
 QT_BEGIN_NAMESPACE
