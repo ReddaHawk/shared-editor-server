@@ -14,22 +14,28 @@ class TcpConnections : public QObject
     Q_OBJECT
 public:
     explicit TcpConnections(QObject *parent = nullptr);
+    explicit TcpConnections(bool removable);
+
     ~TcpConnections();
 
     int count();
 
-protected:
+private:
 QMap<QTcpSocket*, TcpConnection*> m_connections;
+
 void removeSocket(QTcpSocket *socket);
+void removeConnection(QTcpSocket *socket);
+bool removable;
+quint32 fileid;
 
 signals:
     void quitting();
     void finished();
-
+    void pushConnection(TcpConnection *tcpConnection);
 protected slots:
     void disconnected();
     void error(QAbstractSocket::SocketError socketError);
-
+    void moveConnection(TcpConnection *tcpConnection);
 public slots:
     void start();
     void quit();

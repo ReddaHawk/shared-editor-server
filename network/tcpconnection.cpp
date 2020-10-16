@@ -25,7 +25,8 @@ void TcpConnection::setSocket(QTcpSocket *socket)
     connect(m_socket,&QTcpSocket::stateChanged, this, &TcpConnection::stateChanged);  
     // C++ problem: when you try to set SocketError to a slot -> socketError is abstract socket not socket
     connect(m_socket,static_cast<void (QTcpSocket::*)(QAbstractSocket::SocketError)>(&QTcpSocket::error), this, &TcpConnection::error);
-    }
+
+}
 
 QTcpSocket *TcpConnection::getSocket()
 {
@@ -102,6 +103,11 @@ void TcpConnection::readyRead()
         User userMessage;
 
         socketStream >> userMessage;
+
+        qDebug()<<"Emesso";
+        emit openFile(this);
+        break;
+
         if (!socketStream.commitTransaction())
             return;
         qDebug()<< "received: " << userMessage.getImage().size();

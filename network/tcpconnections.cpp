@@ -5,6 +5,11 @@ TcpConnections::TcpConnections(QObject *parent) : QObject(parent)
     qDebug() << this << "created";
 }
 
+TcpConnections::TcpConnections(bool removable) : removable(removable)
+{
+
+}
+
 TcpConnections::~TcpConnections()
 {
     qDebug() << this << "destroyed";
@@ -38,6 +43,22 @@ void TcpConnections::removeSocket(QTcpSocket *socket)
     m_connections.remove(socket);
     // deleteLater() is better because if socket is deleted while used the program will crash
     socket->deleteLater();
+
+    qDebug() << this << " client count = " << m_connections.count();
+
+}
+
+void TcpConnections::removeConnection(QTcpSocket *socket)
+{
+    if(!socket) return;
+    if(!m_connections.contains(socket)) return;
+
+    qDebug() << this << " moving connection = " <<  socket;
+
+
+    m_connections.remove(socket);
+    // deleteLater() is better because if socket is deleted while used the program will crash
+   // socket->deleteLater();
 
     qDebug() << this << " client count = " << m_connections.count();
 
@@ -101,10 +122,24 @@ void TcpConnections::accept(qintptr handle, TcpConnection *connection)
     connect(socket,static_cast<void (QTcpSocket::*)(QAbstractSocket::SocketError)>(&QTcpSocket::error),this,&TcpConnections::error);
 
     connection->moveToThread(QThread::currentThread());
-    connection->setSocket(socket);
 
+    connection->setSocket(socket);
+    connect(connection, &TcpConnection::openFile,this,&TcpConnections::moveConnection);
     m_connections.insert(socket, connection);
     qDebug() << this << " clients = " << m_connections.count();
     emit socket->connected();
+}
 
+void TcpConnections::moveConnection(TcpConnection *tcpConnection)
+{
+    qDebug() << count() << "connection in tcpconnections " << this << " with this socket " << tcpConnection->getSocket();
+    disconnect(tcpConnection->getSocket(),&QTcpSocket::disconnected,this,&TcpConnections::disconnected);
+    disconnect(tcpConnection->getSocket(),static_cast<void (QTcpSocket::*)(QAbstractSocket::SocketError)>(&QTcpSocket::error),this,&TcpConnections::error);
+    disconnect(tcpConnection, &TcpConnection::openFile,this,&TcpConnections::moveConnection);
+    removeConnection(tcpConnection->getSocket());
+    // Notify tcpserver to move connection to the specific tcpconnections
+    qDebug() << count() << "connection in tcpconnections after removing " << this;
+    qDebug() << "Tcp server will receives: pointer " << tcpConnection;
+    qDebug() << "Tcp server will receives: socket " << tcpConnection->getSocket();
+    emit pushConnection(tcpConnection);
 }

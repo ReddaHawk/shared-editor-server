@@ -21,7 +21,7 @@ bool TcpServer::listen(const QHostAddress &address, quint16 port)
     connect(this, &TcpServer::accepting,m_connections,&TcpConnections::accept, Qt::QueuedConnection);
     connect(this,&TcpServer::finished,m_connections,&TcpConnections::quit, Qt::QueuedConnection);
     connect(m_connections,&TcpConnections::finished,this,&TcpServer::complete, Qt::QueuedConnection);
-
+    connect(m_connections, &TcpConnections::pushConnection,this,&TcpServer::getConnection,Qt::QueuedConnection);
     m_connections->moveToThread(m_thread);
     m_thread->start();
 
@@ -81,4 +81,11 @@ void TcpServer::complete()
 
     qDebug() << this << "complete";
 
+}
+
+
+void TcpServer::getConnection(TcpConnection *tcpConnection){
+    qDebug() << "Tcp server receives: pointer " << tcpConnection;
+
+    qDebug() << "Tcp server receives: socket " << tcpConnection->getSocket();
 }

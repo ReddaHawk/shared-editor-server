@@ -15,23 +15,25 @@ public:
     explicit TcpServer(QObject *parent = 0);
     ~TcpServer();
 
-    virtual bool listen(const QHostAddress &address, quint16 port);
-    virtual void close();
-    virtual qint64 port();
+    bool listen(const QHostAddress &address, quint16 port);
+    void close();
+    qint64 port();
 
 
-protected:
+private:
     QThread *m_thread;
     TcpConnections *m_connections;
-    virtual void incomingConnection(qintptr descriptor); //qint64, qHandle, qintptr, uint
-    virtual void accept(qintptr descriptor, TcpConnection *connection);
-
+    QMap <quint32 ,TcpConnections > connectionsByFiles;
+    void incomingConnection(qintptr descriptor); //qint64, qHandle, qintptr, uint
+    void accept(qintptr descriptor, TcpConnection *connection);
+    //void addFile(QT)
 signals:
     void accepting(qintptr handle, TcpConnection *connection);
     void finished();
 
 public slots:
     void complete();
+    void getConnection(TcpConnection *tcpConnection);
 };
 
 #endif // TCPSERVER_H

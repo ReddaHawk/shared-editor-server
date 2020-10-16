@@ -23,7 +23,7 @@ public:
     QTcpSocket *m_socket;
     QTcpSocket* getSocket();
 
-    quint32 userId;
+    quint32 siteId;
 
 private:
     QSqlDatabase db;
@@ -32,6 +32,7 @@ private:
 
 
 signals:
+    void openFile(TcpConnection *tcpConnection);
 
 public slots:
     void connected();
