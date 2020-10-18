@@ -1,13 +1,26 @@
 #include "DocumentEntity.h"
 
-
-DocumentEntity::DocumentEntity(int ownerId, int documentId, QString name, QString path)
+DocumentEntity::DocumentEntity(quint32 documentId)
 {
-    this->ownerId = ownerId;
     this->documentId = documentId;
+}
+
+DocumentEntity::DocumentEntity(quint32 documentId, QString &ownerEmail, QString &name, QString &path)
+{
+    this->documentId = documentId;
+    this->ownerEmail = ownerEmail;
     this->name = name;
     this->path=path;
     this->date=getCurrentDate();
+}
+
+DocumentEntity::DocumentEntity(quint32 documentId, QString ownerEmail, QString name, QString path, QString date)
+{
+    this->documentId = documentId;
+    this->ownerEmail = ownerEmail;
+    this->name = name;
+    this->path=path;
+    this->date=date;
 }
 
 /*
@@ -36,6 +49,23 @@ QChar* DocumentEntity::getCurrentDate(){
 QString DocumentEntity::getCurrentDate(){
     QDateTime dt = QDateTime::currentDateTimeUtc();
     return dt.toString();
+}
+
+quint32 DocumentEntity::getDocumentId() {
+    return documentId;
+}
+
+
+QString DocumentEntity::getOwnerEmail() {
+    return ownerEmail;
+}
+
+QString DocumentEntity::getName() {
+    return name;
+}
+
+QString DocumentEntity::getPath() {
+    return path;
 }
 
 /*Get the document creation date*/

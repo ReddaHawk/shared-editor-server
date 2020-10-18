@@ -277,6 +277,67 @@ void TcpConnection::readyRead()
         break;
     }
 
+    case MessageType::C_OPEN: {
+        if(!userLogged){
+            headerResponse.setType(MessageType::S_NOT_LOGGED);
+            replyStream << headerResponse;
+            break;
+        }
+
+        OpenMessage openMsg;
+        socketStream >> openMsg;
+        if (!socketStream.commitTransaction())
+            return;
+
+        qDebug() << "Received document open request";
+
+        if(siteId != openMsg.getSiteId()) {
+            qDebug() << "Wrong siteId";
+            headerResponse.setType(MessageType::S_OPEN_KO);
+            replyStream << headerResponse;
+            break;
+        }
+
+        if(db.open()) {
+            quint32 documentId = uriToDocumentId(openMsg.getUri());
+            DocumentEntity docEntity(documentId);
+            if (findDocument(db, docEntity)) {
+                docFile = new QFile(docEntity.getPath(), this);
+                if (docFile->exists()) {
+                    docFile->open(QIODevice::ReadOnly);
+                    QString docText(docFile->readAll());
+                    docFile->close();
+
+                    DocumentMessage docMsg(docEntity.getDocumentId(),
+                                           docEntity.getOwnerEmail(),
+                                           docEntity.getName(),
+                                           docEntity.getDate(),
+                                           docText);
+
+                    headerResponse.setType(MessageType::S_OPEN_OK);
+                    replyStream << headerResponse << docMsg;
+                    break;
+                } else {
+                    qDebug() << "Open failed: documentId does not exists";
+                    headerResponse.setType(MessageType::S_OPEN_KO);
+                    replyStream << headerResponse;
+                    break;
+                }
+            } else {
+                qDebug() << "Open failed: documentId does not exists";
+                headerResponse.setType(MessageType::S_OPEN_KO);
+                replyStream << headerResponse;
+                break;
+            }
+
+            db.close();
+        } else {
+            // Error db
+            headerResponse.setType(MessageType::S_ERROR_DB);
+            replyStream << headerResponse;
+        }
+
+    }
 
     }
 
@@ -313,6 +374,11 @@ void TcpConnection::error(QAbstractSocket::SocketError socketError)
     if(!sender()) return;
     qDebug() << this << " error "<< sender() << " error " << socketError;
 
+}
+
+quint32 TcpConnection::uriToDocumentId(QUrl uri)
+{
+    return uri.authority().toUInt();
 }
 
 

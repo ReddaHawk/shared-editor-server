@@ -7,11 +7,11 @@
 
 #include"serialization.h"
 
-class DocumentDTO : public Serialization
+class DocumentMessage : public Serialization
 {
 private:
-    int ownerId;
-    int documentId = 0;
+    quint32 documentId = 0;
+    QString ownerEmail;
     QString name;
     //std::vector<int> connectedUsers;
     QString date; //document creation date
@@ -21,12 +21,12 @@ private:
     QDataStream &unserialize(QDataStream &stream) override;
 
 public:
-    DocumentDTO(int ownerId, QString name, QString date, QString text);
+    DocumentMessage(QString ownerEmail, QString name, QString date, QString text);
+    DocumentMessage(quint32 documentId, QString ownerEmail, QString name, QString date, QString text);
 
-    int getOwnerId();
-    int getDocumentId();
+    QString getOwnerEmail();
+    quint32 getDocumentId();
     QString getName();
-    //std::vector<int> getConnectedUsers();
     QString getDate();
     QString getText();
 

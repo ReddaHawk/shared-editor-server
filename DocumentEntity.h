@@ -4,25 +4,29 @@
 #include <ctime>
 #include <QString>
 #include <QChar>
-#include <QObject>
 #include <QDateTime>
 
-class DocumentEntity: public QObject
+class DocumentEntity
 {
-    Q_OBJECT
-
 private:
-    int ownerId;
-    int documentId;
+    quint32 documentId;
+    QString ownerEmail;
     QString name;
     QString path;
     QString date;
 
+    QString getCurrentDate();
 
 public:
-    DocumentEntity(int ownerId, int documentId, QString name, QString path);
+    DocumentEntity(quint32 documentId);
+    DocumentEntity(quint32 documentId, QString &ownerEmail, QString &name, QString &path);
+    DocumentEntity(quint32 documentId, QString ownerEmail, QString name, QString path, QString date);
 
-    QString getCurrentDate();
+
+    quint32 getDocumentId();
+    QString getOwnerEmail();
+    QString getName();
+    QString getPath();
     QString getDate();
 };
 

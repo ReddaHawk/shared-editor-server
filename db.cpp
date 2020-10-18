@@ -50,6 +50,29 @@ const auto UPDATE_USER_PASSWORD_SQL = QLatin1String(R"(
                                                     WHERE email = ?
     )");
 
+const auto DOCUMENTS_SQL = QLatin1String(R"(
+                                            create table documents_table
+                                            (
+                                                document_id int not null,
+                                                owner_email varchar(50) not null,
+                                                name varchar(150) not null,
+                                                path varchar(260) not null,
+                                                date varchar(50) not null,
+                                                primary key (document_id)
+                                            );
+    )");
+
+const auto INSERT_DOCUMENT_SQL = QLatin1String(R"(
+    insert into documents_table(document_id, owner_email, name, path, date)
+                      values(?, ?, ?, ?, ?)
+    )");
+
+const auto FIND_DOCUMENT_BY_ID_SQL = QLatin1String(R"(
+                                                 SELECT document_id, owner_email, name, path, date
+                                                 FROM documents_table
+                                                 WHERE document_id=?
+    )");
+
 QString hostname;
 QString dbname;
 QString port;
@@ -238,14 +261,23 @@ QSqlError initDb(QString& hostname, QString& dbname, QString& port, QString& use
         // Esiste la tabella users?
         if (!tables.contains("users_table", Qt::CaseInsensitive))
         {
-            qDebug() << "Table not exists";
+            qDebug() << "Users table does not exists";
             if (!q.exec(USERS_SQL))
             {
-                qDebug()<< q.lastError().text();
+                qDebug() << q.lastError().text();
                 return q.lastError();
             }
             //populateUsersTable();
 
+        }
+        if (!tables.contains("documents_table", Qt::CaseInsensitive))
+        {
+            qDebug() << "Documents table does not exists";
+            if (!q.exec(DOCUMENTS_SQL))
+            {
+                qDebug() << q.lastError().text();
+                return q.lastError();
+            }
         }
         return q.lastError();
 }
@@ -272,3 +304,45 @@ void closeDb()
     return;
 }
 
+
+void addDocumentExec(QSqlQuery &q, DocumentEntity &document) {
+    if (!q.prepare(INSERT_DOCUMENT_SQL))
+        return;
+    q.addBindValue(document.getDocumentId());
+    q.addBindValue(document.getOwnerEmail());
+    q.addBindValue(document.getName());
+    q.addBindValue(document.getPath());
+    q.addBindValue(document.getDate());
+    q.exec();
+}
+
+bool addDocument(QSqlDatabase db, DocumentEntity &document) {
+    QSqlQuery q(db);
+    addDocumentExec(q, document);
+    if (q.lastError().type() != QSqlError::NoError){
+        qDebug() << q.lastError().text();
+        return false;
+    }
+    return true;
+}
+
+int findDocumentExec(QSqlQuery &q, DocumentEntity &document) {
+    if (!q.prepare(FIND_DOCUMENT_BY_ID_SQL))
+        return -1;
+    q.addBindValue(document.getDocumentId());
+    q.exec();
+    return q.size();
+}
+
+bool findDocument(QSqlDatabase db, DocumentEntity &document) {
+    QSqlQuery q(db);
+    int ret = findDocumentExec(q, document);
+    if (ret == -1 || ret == 0) return false;
+    q.first();
+    document = DocumentEntity(q.value(0).toUInt(),
+                              q.value(1).toString(),
+                              q.value(2).toString(),
+                              q.value(3).toString(),
+                              q.value(4).toString());
+    return true;
+}

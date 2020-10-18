@@ -6,8 +6,11 @@
 #include <QTcpSocket>
 #include <QDataStream>
 #include "messages/header.h"
-#include "messages/message.h"
+#include "messages/usermessage.h"
+#include "messages/openmessage.h"
+#include "messages/documentmessage.h"
 #include "user.h"
+#include "DocumentDTO.h"
 #include "db.h"
 #include "messages/messageType.h"
 
@@ -23,13 +26,15 @@ public:
     QTcpSocket *m_socket;
     QTcpSocket* getSocket();
 
-    quint32 userId;
+    quint32 siteId;
 
 private:
     QSqlDatabase db;
     User m_user;
     bool userLogged;
+    QFile *docFile;
 
+    quint32 uriToDocumentId(QUrl uri);
 
 signals:
 

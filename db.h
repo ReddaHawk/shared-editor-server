@@ -3,6 +3,7 @@
 #include <QtSql>
 #include <iostream>
 #include "user.h"
+#include "DocumentEntity.h"
 
 
 void addUser(QSqlQuery &q, User &user);
@@ -20,6 +21,10 @@ bool updateNameUser (QSqlDatabase db, User &user , QString &newName);
 bool updateSurnameUser (QSqlDatabase db, User &user , QString &newSurname);
 
 bool updatePasswordUser (QSqlDatabase db, User &user , QString &newPass);
+
+bool addDocument(QSqlDatabase db, DocumentEntity &document);
+
+bool findDocument(QSqlDatabase db, DocumentEntity &document);
 
 
 

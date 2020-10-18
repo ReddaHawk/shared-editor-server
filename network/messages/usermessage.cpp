@@ -1,4 +1,4 @@
-#include "message.h"
+#include "usermessage.h"
 
 UserMessage::UserMessage(QString& name, QString& surname) : name(name), prova(surname)
 {

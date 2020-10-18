@@ -3,10 +3,14 @@ INCLUDEPATH += $$PWD
 DEPENDPATH += $$PWD
 
 HEADERS += \
+    $$PWD/documentmessage.h \
     $$PWD/header.h \
-    $$PWD/message.h \
-    $$PWD/messageType.h
+    $$PWD/messageType.h \
+    $$PWD/openmessage.h \
+    $$PWD/usermessage.h
 
 SOURCES += \
+    $$PWD/documentmessage.cpp \
     $$PWD/header.cpp \
-    $$PWD/message.cpp
+    $$PWD/openmessage.cpp \
+    $$PWD/usermessage.cpp
