@@ -33,8 +33,11 @@ enum class MessageType : qint32 {
     C_OPEN = 10,
     S_OPEN_OK = 11,
     S_OPEN_KO = -11,
-    EDIT = 12,
-    CURSOR_POS = 13
+    C_NEW = 12,
+    S_NEW_OK = 13,
+    S_NEW_KO = -13,
+    EDIT = 14,
+    CURSOR_POS = 15
 
 };
 

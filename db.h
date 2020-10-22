@@ -27,7 +27,6 @@ bool addDocument(QSqlDatabase db, DocumentEntity &document);
 bool findDocument(QSqlDatabase db, DocumentEntity &document);
 
 
-
 QSqlError populateUsersTable();
 
 QSqlError initDb(QString& hostname, QString& dbname, QString& port, QString& username, QString& password);
@@ -35,5 +34,9 @@ QSqlError initDb(QString& hostname, QString& dbname, QString& port, QString& use
 QSqlDatabase startDb();
 
 void closeDb();
+
+void setDocumentsDirectory(QString dir);
+
+QString createDocumentPath(QUuid documentId);
 
 #endif // DB_H

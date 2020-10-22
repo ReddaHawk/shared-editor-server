@@ -17,10 +17,10 @@
    <widget class="QStackedWidget" name="stackedWidget">
     <property name="geometry">
      <rect>
-      <x>70</x>
-      <y>50</y>
-      <width>431</width>
-      <height>391</height>
+      <x>10</x>
+      <y>10</y>
+      <width>531</width>
+      <height>471</height>
      </rect>
     </property>
     <property name="currentIndex">
@@ -30,10 +30,10 @@
      <widget class="QGroupBox" name="groupBox">
       <property name="geometry">
        <rect>
-        <x>60</x>
-        <y>50</y>
-        <width>241</width>
-        <height>257</height>
+        <x>140</x>
+        <y>40</y>
+        <width>243</width>
+        <height>321</height>
        </rect>
       </property>
       <property name="title">
@@ -125,6 +125,45 @@
         </layout>
        </item>
        <item>
+        <widget class="Line" name="line">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_16">
+         <item>
+          <widget class="QLabel" name="label_11">
+           <property name="text">
+            <string>Documents folder</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="pushButton_selectDocsPath">
+           <property name="text">
+            <string>Select</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QLineEdit" name="lineEdit_docspath">
+         <property name="readOnly">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="Line" name="line_2">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QPushButton" name="pushButton_logindb">
          <property name="text">
           <string>LoginDB</string>
@@ -203,7 +242,7 @@
      <x>0</x>
      <y>0</y>
      <width>549</width>
-     <height>27</height>
+     <height>22</height>
     </rect>
    </property>
   </widget>

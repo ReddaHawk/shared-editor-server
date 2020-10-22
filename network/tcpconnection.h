@@ -34,7 +34,7 @@ private:
     bool userLogged;
     QFile *docFile;
 
-    quint32 uriToDocumentId(QUrl uri);
+    QUuid uriToDocumentId(QUrl uri);
 
 signals:
 

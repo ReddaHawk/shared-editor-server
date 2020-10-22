@@ -1,11 +1,11 @@
 #include "DocumentEntity.h"
 
-DocumentEntity::DocumentEntity(quint32 documentId)
+DocumentEntity::DocumentEntity(QUuid documentId)
 {
     this->documentId = documentId;
 }
 
-DocumentEntity::DocumentEntity(quint32 documentId, QString &ownerEmail, QString &name, QString &path)
+DocumentEntity::DocumentEntity(QUuid documentId, QString ownerEmail, QString name, QString path)
 {
     this->documentId = documentId;
     this->ownerEmail = ownerEmail;
@@ -14,7 +14,7 @@ DocumentEntity::DocumentEntity(quint32 documentId, QString &ownerEmail, QString 
     this->date=getCurrentDate();
 }
 
-DocumentEntity::DocumentEntity(quint32 documentId, QString ownerEmail, QString name, QString path, QString date)
+DocumentEntity::DocumentEntity(QUuid documentId, QString ownerEmail, QString name, QString path, QString date)
 {
     this->documentId = documentId;
     this->ownerEmail = ownerEmail;
@@ -51,7 +51,7 @@ QString DocumentEntity::getCurrentDate(){
     return dt.toString();
 }
 
-quint32 DocumentEntity::getDocumentId() {
+QUuid DocumentEntity::getDocumentId() {
     return documentId;
 }
 

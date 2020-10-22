@@ -3,14 +3,14 @@
 
 DocumentMessage:: DocumentMessage(QString ownerEmail, QString name, QString date, QString text){
     this->ownerEmail = ownerEmail;
-    this->documentId = documentId+1;  //unique incremental id for the document
+    this->documentId = QUuid();  //unique incremental id for the document
     this->name = name; //default name
     //this->connectedUsers = connectedUsers;
     this->date = date;
     this->text = text;
 }
 
-DocumentMessage:: DocumentMessage(quint32 documentId, QString ownerEmail, QString name, QString date, QString text){
+DocumentMessage:: DocumentMessage(QUuid documentId, QString ownerEmail, QString name, QString date, QString text){
     this->ownerEmail = ownerEmail;
     this->documentId = documentId;  //unique incremental id for the document
     this->name = name; //default name
@@ -23,7 +23,7 @@ QString DocumentMessage::getOwnerEmail() {
     return ownerEmail;
 }
 
-quint32 DocumentMessage::getDocumentId() {
+QUuid DocumentMessage::getDocumentId() {
     return documentId;
 }
 

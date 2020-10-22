@@ -25,6 +25,7 @@ MainWindow::MainWindow(QWidget *parent)
         ui->lineEdit_username->setText("root");
         ui->lineEdit_password->setText("mypass");
         ui->lineEdit_password->setEchoMode(QLineEdit::Password);
+        ui->lineEdit_docspath->setText("Select folder");
     }
 
 }
@@ -90,4 +91,14 @@ void MainWindow::on_pushButton_stopServer_clicked()
 {
         m_tcpServer.close();
         setStarted(false);
+}
+
+void MainWindow::on_pushButton_selectDocsPath_clicked()
+{
+    QString dir = QFileDialog::getExistingDirectory(this, tr("Select Documents Directory"),
+                                                    "",
+                                                    QFileDialog::ShowDirsOnly
+                                                    | QFileDialog::DontResolveSymlinks);
+    ui->lineEdit_docspath->setText(dir);
+    setDocumentsDirectory(dir);
 }

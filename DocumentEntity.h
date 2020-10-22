@@ -5,11 +5,12 @@
 #include <QString>
 #include <QChar>
 #include <QDateTime>
+#include <QUuid>
 
 class DocumentEntity
 {
 private:
-    quint32 documentId;
+    QUuid documentId;
     QString ownerEmail;
     QString name;
     QString path;
@@ -18,12 +19,12 @@ private:
     QString getCurrentDate();
 
 public:
-    DocumentEntity(quint32 documentId);
-    DocumentEntity(quint32 documentId, QString &ownerEmail, QString &name, QString &path);
-    DocumentEntity(quint32 documentId, QString ownerEmail, QString name, QString path, QString date);
+    DocumentEntity(QUuid documentId);
+    DocumentEntity(QUuid documentId, QString ownerEmail, QString name, QString path);
+    DocumentEntity(QUuid documentId, QString ownerEmail, QString name, QString path, QString date);
 
 
-    quint32 getDocumentId();
+    QUuid getDocumentId();
     QString getOwnerEmail();
     QString getName();
     QString getPath();

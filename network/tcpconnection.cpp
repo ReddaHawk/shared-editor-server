@@ -299,7 +299,7 @@ void TcpConnection::readyRead()
         }
 
         if(db.open()) {
-            quint32 documentId = uriToDocumentId(openMsg.getUri());
+            QUuid documentId = uriToDocumentId(openMsg.getUri());
             DocumentEntity docEntity(documentId);
             if (findDocument(db, docEntity)) {
                 docFile = new QFile(docEntity.getPath(), this);
@@ -339,6 +339,53 @@ void TcpConnection::readyRead()
 
     }
 
+    case MessageType::C_NEW: {
+        if(!userLogged){
+            headerResponse.setType(MessageType::S_NOT_LOGGED);
+            replyStream << headerResponse;
+            break;
+        }
+
+        DocumentMessage docMsg;
+        socketStream >> docMsg;
+        if (!socketStream.commitTransaction())
+            return;
+
+        qDebug() << "Received document creation request";
+
+        if(db.open()) {
+            QUuid newDocumentId = QUuid::createUuid();
+            QString docPath = createDocumentPath(newDocumentId);
+            DocumentEntity newDocEntity{newDocumentId, docMsg.getOwnerEmail(), docMsg.getName(), docPath};
+            docFile = new QFile(docPath, this);
+            if (docFile->open(QIODevice::WriteOnly)) {
+                docFile->write(docMsg.getText().toUtf8());
+                docFile->close();
+
+                DocumentMessage docMsg(newDocumentId,
+                                       newDocEntity.getOwnerEmail(),
+                                       newDocEntity.getName(),
+                                       newDocEntity.getDate(),
+                                       "");
+
+                headerResponse.setType(MessageType::S_NEW_OK);
+                replyStream << headerResponse << docMsg;
+                break;
+            } else {
+                qDebug() << "Creation failed: file does not exists";
+                headerResponse.setType(MessageType::S_NEW_KO);
+                replyStream << headerResponse;
+                break;
+            }
+
+            db.close();
+        } else {
+            // Error db
+            headerResponse.setType(MessageType::S_ERROR_DB);
+            replyStream << headerResponse;
+        }
+    }
+
     }
 
     /*
@@ -376,9 +423,9 @@ void TcpConnection::error(QAbstractSocket::SocketError socketError)
 
 }
 
-quint32 TcpConnection::uriToDocumentId(QUrl uri)
+QUuid TcpConnection::uriToDocumentId(QUrl uri)
 {
-    return uri.authority().toUInt();
+    return QUuid(uri.authority());
 }
 
 

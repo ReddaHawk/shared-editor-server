@@ -53,7 +53,7 @@ const auto UPDATE_USER_PASSWORD_SQL = QLatin1String(R"(
 const auto DOCUMENTS_SQL = QLatin1String(R"(
                                             create table documents_table
                                             (
-                                                document_id int not null,
+                                                document_id char(36) not null,
                                                 owner_email varchar(50) not null,
                                                 name varchar(150) not null,
                                                 path varchar(260) not null,
@@ -78,6 +78,7 @@ QString dbname;
 QString port;
 QString username;
 QString password;
+QDir documentsDirectory;
 
 void addUser(QSqlQuery &q, User &user)
 {
@@ -339,10 +340,18 @@ bool findDocument(QSqlDatabase db, DocumentEntity &document) {
     int ret = findDocumentExec(q, document);
     if (ret == -1 || ret == 0) return false;
     q.first();
-    document = DocumentEntity(q.value(0).toUInt(),
+    document = DocumentEntity(q.value(0).toString(),
                               q.value(1).toString(),
                               q.value(2).toString(),
                               q.value(3).toString(),
                               q.value(4).toString());
     return true;
+}
+
+void setDocumentsDirectory(QString dir) {
+    documentsDirectory = QDir(dir);
+}
+
+QString createDocumentPath(QUuid documentId) {
+    return documentsDirectory.filePath(documentId.toString());
 }
