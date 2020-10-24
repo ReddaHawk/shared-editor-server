@@ -1,7 +1,3 @@
-//
-// Created by leonardo on 07/05/19.
-//
-
 #include "servereditor.h"
 
 ServerEditor::ServerEditor() {
@@ -9,6 +5,12 @@ ServerEditor::ServerEditor() {
     Symbol newSym = generateSymbol(QChar::ParagraphSeparator, QTextCharFormat(), QTextBlockFormat(), 0);
     auto it = _symbols.begin();
     _symbols.insert(it, newSym);
+}
+
+ServerEditor::ServerEditor(QVector<Symbol> &symbols) :
+    _siteId(-1),
+    _symbols(symbols)
+{
 }
 
 int ServerEditor::getSiteId() {

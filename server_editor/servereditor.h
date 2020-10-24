@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QChar>
 #include <QString>
+#include <QVector>
 
 #include "editingmessage.h"
 #include "symbol.h"
@@ -14,6 +15,7 @@ class ServerEditor : public QObject
 
 public:
     ServerEditor();
+    explicit ServerEditor(QVector<Symbol> &symbols);
     int getSiteId();
     int getSymbolSiteId(int index);
     QTextCharFormat getSymbolFormat(int index);
@@ -29,7 +31,7 @@ signals:
 
 private:
     int _siteId{};
-    std::vector<Symbol> _symbols;
+    QVector<Symbol> _symbols;
     int _counter=1;
 
     Symbol generateSymbol(QChar value, QTextCharFormat charFormat, QTextBlockFormat blockFormat, int index);
