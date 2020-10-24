@@ -4,6 +4,7 @@ DEPENDPATH += $$PWD
 
 HEADERS += \
     $$PWD/documentmessage.h \
+    $$PWD/editingmessage.h \
     $$PWD/header.h \
     $$PWD/messageType.h \
     $$PWD/openmessage.h \
@@ -11,6 +12,7 @@ HEADERS += \
 
 SOURCES += \
     $$PWD/documentmessage.cpp \
+    $$PWD/editingmessage.cpp \
     $$PWD/header.cpp \
     $$PWD/openmessage.cpp \
     $$PWD/usermessage.cpp

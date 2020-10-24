@@ -9,6 +9,7 @@
 #include "messages/usermessage.h"
 #include "messages/openmessage.h"
 #include "messages/documentmessage.h"
+#include "messages/editingmessage.h"
 #include "user.h"
 #include "DocumentDTO.h"
 #include "db.h"
@@ -32,7 +33,6 @@ private:
     QSqlDatabase db;
     User m_user;
     bool userLogged;
-    QFile *docFile;
 
     QUuid uriToDocumentId(QUrl uri);
 

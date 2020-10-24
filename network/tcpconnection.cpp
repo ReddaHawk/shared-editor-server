@@ -302,11 +302,11 @@ void TcpConnection::readyRead()
             QUuid documentId = uriToDocumentId(openMsg.getUri());
             DocumentEntity docEntity(documentId);
             if (findDocument(db, docEntity)) {
-                docFile = new QFile(docEntity.getPath(), this);
-                if (docFile->exists()) {
-                    docFile->open(QIODevice::ReadOnly);
-                    QString docText(docFile->readAll());
-                    docFile->close();
+                QFile docFile{docEntity.getPath(), this};
+                if (docFile.exists()) {
+                    docFile.open(QIODevice::ReadOnly);
+                    QString docText(docFile.readAll());
+                    docFile.close();
 
                     DocumentMessage docMsg(docEntity.getDocumentId(),
                                            docEntity.getOwnerEmail(),
@@ -357,10 +357,10 @@ void TcpConnection::readyRead()
             QUuid newDocumentId = QUuid::createUuid();
             QString docPath = createDocumentPath(newDocumentId);
             DocumentEntity newDocEntity{newDocumentId, docMsg.getOwnerEmail(), docMsg.getName(), docPath};
-            docFile = new QFile(docPath, this);
-            if (docFile->open(QIODevice::WriteOnly)) {
-                docFile->write(docMsg.getText().toUtf8());
-                docFile->close();
+            QFile docFile{docPath, this};
+            if (docFile.open(QIODevice::WriteOnly)) {
+                docFile.write(docMsg.getText().toUtf8());
+                docFile.close();
 
                 DocumentMessage docMsg(newDocumentId,
                                        newDocEntity.getOwnerEmail(),
@@ -384,6 +384,24 @@ void TcpConnection::readyRead()
             headerResponse.setType(MessageType::S_ERROR_DB);
             replyStream << headerResponse;
         }
+    }
+
+    case MessageType::EDIT: {
+        if(!userLogged){
+            headerResponse.setType(MessageType::S_NOT_LOGGED);
+            replyStream << headerResponse;
+            break;
+        }
+
+        EditingMessage editMsg;
+        socketStream >> editMsg;
+
+        if (!socketStream.commitTransaction())
+            return;
+
+        qDebug() << "Received edit request";
+
+
     }
 
     }
