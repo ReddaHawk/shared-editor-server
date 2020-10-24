@@ -3,6 +3,7 @@ INCLUDEPATH += $$PWD
 DEPENDPATH += $$PWD
 
 HEADERS += \
+    $$PWD/cursorpositionmessage.h \
     $$PWD/documentmessage.h \
     $$PWD/editingmessage.h \
     $$PWD/header.h \
@@ -11,6 +12,7 @@ HEADERS += \
     $$PWD/usermessage.h
 
 SOURCES += \
+    $$PWD/cursorpositionmessage.cpp \
     $$PWD/documentmessage.cpp \
     $$PWD/editingmessage.cpp \
     $$PWD/header.cpp \

@@ -1,22 +1,22 @@
 #include "documentmessage.h"
 
 
-DocumentMessage:: DocumentMessage(QString ownerEmail, QString name, QString date, QString text){
+DocumentMessage:: DocumentMessage(QString ownerEmail, QString name, QString date, QVector<Symbol> symbols){
     this->ownerEmail = ownerEmail;
     this->documentId = QUuid();  //unique incremental id for the document
     this->name = name; //default name
     //this->connectedUsers = connectedUsers;
     this->date = date;
-    this->text = text;
+    this->symbols = symbols;
 }
 
-DocumentMessage:: DocumentMessage(QUuid documentId, QString ownerEmail, QString name, QString date, QString text){
+DocumentMessage:: DocumentMessage(QUuid documentId, QString ownerEmail, QString name, QString date, QVector<Symbol> symbols){
     this->ownerEmail = ownerEmail;
     this->documentId = documentId;  //unique incremental id for the document
     this->name = name; //default name
     //this->connectedUsers = connectedUsers;
     this->date = date;
-    this->text = text;
+    this->symbols = symbols;
 }
 
 QString DocumentMessage::getOwnerEmail() {
@@ -47,16 +47,16 @@ QString DocumentMessage::getDate(){
 }
 
 
-QString DocumentMessage::getText(){
-    return text;
+QVector<Symbol>& DocumentMessage::getSymbols(){
+    return symbols;
 }
 
 QDataStream &DocumentMessage::serialize(QDataStream &stream) const {
-  stream << ownerEmail << documentId << name << text << date;
+  stream << ownerEmail << documentId << name << symbols << date;
   return stream;
 }
 
 QDataStream &DocumentMessage::unserialize(QDataStream &stream) {
-  stream >> ownerEmail >> documentId >> name >> text >> date;
+  stream >> ownerEmail >> documentId >> name >> symbols >> date;
   return stream;
 }

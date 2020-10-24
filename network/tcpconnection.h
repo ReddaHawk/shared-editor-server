@@ -10,6 +10,7 @@
 #include "messages/openmessage.h"
 #include "messages/documentmessage.h"
 #include "messages/editingmessage.h"
+#include "messages/cursorpositionmessage.h"
 #include "user.h"
 #include "DocumentDTO.h"
 #include "db.h"

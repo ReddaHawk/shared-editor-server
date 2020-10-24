@@ -303,22 +303,34 @@ void TcpConnection::readyRead()
             DocumentEntity docEntity(documentId);
             if (findDocument(db, docEntity)) {
                 QFile docFile{docEntity.getPath(), this};
-                if (docFile.exists()) {
-                    docFile.open(QIODevice::ReadOnly);
-                    QString docText(docFile.readAll());
+                if (docFile.open(QIODevice::ReadOnly)) {
+                    QDataStream docFileStream(&docFile);
+                    QVector<Symbol> docSymbols;
+
+                    while(true) {
+                        Symbol tempSym;
+                        docFileStream.startTransaction();
+                        docFileStream >> tempSym;
+                        if (docFileStream.commitTransaction()) {
+                            docSymbols << tempSym;
+                        } else {
+                            break;
+                        }
+                    }
+
                     docFile.close();
 
                     DocumentMessage docMsg(docEntity.getDocumentId(),
                                            docEntity.getOwnerEmail(),
                                            docEntity.getName(),
                                            docEntity.getDate(),
-                                           docText);
+                                           docSymbols);
 
                     headerResponse.setType(MessageType::S_OPEN_OK);
                     replyStream << headerResponse << docMsg;
                     break;
                 } else {
-                    qDebug() << "Open failed: documentId does not exists";
+                    qDebug() << "Open failed";
                     headerResponse.setType(MessageType::S_OPEN_KO);
                     replyStream << headerResponse;
                     break;
@@ -359,14 +371,19 @@ void TcpConnection::readyRead()
             DocumentEntity newDocEntity{newDocumentId, docMsg.getOwnerEmail(), docMsg.getName(), docPath};
             QFile docFile{docPath, this};
             if (docFile.open(QIODevice::WriteOnly)) {
-                docFile.write(docMsg.getText().toUtf8());
+                QDataStream docFileStream(&docFile);
+
+                foreach (Symbol sym, docMsg.getSymbols()) {
+                    docFileStream << sym;
+                }
+
                 docFile.close();
 
                 DocumentMessage docMsg(newDocumentId,
                                        newDocEntity.getOwnerEmail(),
                                        newDocEntity.getName(),
                                        newDocEntity.getDate(),
-                                       "");
+                                       QVector<Symbol>()); // reply with empty vector
 
                 headerResponse.setType(MessageType::S_NEW_OK);
                 replyStream << headerResponse << docMsg;
@@ -401,7 +418,27 @@ void TcpConnection::readyRead()
 
         qDebug() << "Received edit request";
 
+        //TODO: process into local text editor
+        //TODO: cast to other remote users
 
+    }
+
+    case MessageType::CURSOR_POS: {
+        if(!userLogged){
+            headerResponse.setType(MessageType::S_NOT_LOGGED);
+            replyStream << headerResponse;
+            break;
+        }
+
+        CursorPositionMessage curPosMsg;
+        socketStream >> curPosMsg;
+
+        if (!socketStream.commitTransaction())
+            return;
+
+        qDebug() << "Received cursor position change request";
+
+        //TODO: cast to other remote users
     }
 
     }

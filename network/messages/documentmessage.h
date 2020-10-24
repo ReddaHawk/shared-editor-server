@@ -1,12 +1,13 @@
 #ifndef DOCUMENTDTO_H
 #define DOCUMENTDTO_H
 
-#include <vector>
+#include <QVector>
 #include <QObject>
 #include <QString>
 #include <QUuid>
 
-#include"serialization.h"
+#include "serialization.h"
+#include "symbol.h"
 
 class DocumentMessage : public Serialization
 {
@@ -14,23 +15,22 @@ private:
     QUuid documentId;
     QString ownerEmail;
     QString name;
-    //std::vector<int> connectedUsers;
     QString date; //document creation date
-    QString text;
+    QVector<Symbol> symbols;
 
     QDataStream &serialize(QDataStream &stream) const override;
     QDataStream &unserialize(QDataStream &stream) override;
 
 public:
     DocumentMessage() = default;
-    DocumentMessage(QString ownerEmail, QString name, QString date, QString text);
-    DocumentMessage(QUuid documentId, QString ownerEmail, QString name, QString date, QString text);
+    DocumentMessage(QString ownerEmail, QString name, QString date, QVector<Symbol>);
+    DocumentMessage(QUuid documentId, QString ownerEmail, QString name, QString date, QVector<Symbol>);
 
     QString getOwnerEmail();
     QUuid getDocumentId();
     QString getName();
     QString getDate();
-    QString getText();
+    QVector<Symbol>& getSymbols();
 
     void setName(QString newName);
 };
