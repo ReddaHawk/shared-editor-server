@@ -12,31 +12,47 @@
 class TcpConnections : public QObject
 {
     Q_OBJECT
+    QThread *serverThread;
 public:
     explicit TcpConnections(QObject *parent = nullptr);
+    explicit TcpConnections(QThread *serverThread);
+    explicit TcpConnections(QThread *serverThread, quint32 fileId);
+
     ~TcpConnections();
+    int count();
 
-    virtual int count();
-
-protected:
+private:
 QMap<QTcpSocket*, TcpConnection*> m_connections;
+QSqlDatabase db;
 void removeSocket(QTcpSocket *socket);
+void removeConnection(TcpConnection *tcpConnection);
+bool removable = false;
+
+quint32 fileId;
 
 signals:
     void quitting();
     void finished();
-
+    void pushConnection(TcpConnection *tcpConnection);
+    void closeFile(quint32 fileId);
 protected slots:
     void disconnected();
     void error(QAbstractSocket::SocketError socketError);
-
+    void moveConnection(quint32 fileId);
 public slots:
     void start();
     void quit();
+    void acceptConnection(QTcpSocket *socket, TcpConnection* tcpConnection);
+    void loginUserDB(User user);
+    void registerUser(User user);
+    void updateNameUserDB(User user, QString name);
+    void updateImgUserDB(User user, QByteArray img);
+    void updateSrnUserDB(User user, QString surname);
+    void updatePswUserDB(User user, QString oldPsw, QString newPsw);
+
     // Server receives the connection and push a signal to this slot. This slot accept a handle 
     // and not the socket because it is executed in other thread
     void accept(qintptr handle, TcpConnection *connection);
-
 };
 
 #endif // TCPCONNECTIONS_H
