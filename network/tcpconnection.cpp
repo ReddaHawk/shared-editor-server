@@ -403,7 +403,7 @@ void TcpConnection::readyRead()
         }
     }
 
-    case MessageType::EDIT: {
+    case MessageType::B_EDIT: {
         if(!userLogged){
             headerResponse.setType(MessageType::S_NOT_LOGGED);
             replyStream << headerResponse;
@@ -423,7 +423,7 @@ void TcpConnection::readyRead()
 
     }
 
-    case MessageType::CURSOR_POS: {
+    case MessageType::B_CURSOR_POS: {
         if(!userLogged){
             headerResponse.setType(MessageType::S_NOT_LOGGED);
             replyStream << headerResponse;
@@ -441,8 +441,12 @@ void TcpConnection::readyRead()
         //TODO: cast to other remote users
     }
 
-    }
+    default:
+        qDebug() << "Unknown MessageType: wait for more data";
+        if (!socketStream.commitTransaction())
+            return;
 
+    }
     /*
     if(header.getType() == MessageType::C_LOGIN)
     {
