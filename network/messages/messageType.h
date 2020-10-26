@@ -30,6 +30,7 @@ enum class MessageType : qint32 {
     // If user instert wrong old passw
     S_UPD_KO = -7,
     S_NOT_LOGGED= -8,
+    C_TEST = 1000
 
 };
 

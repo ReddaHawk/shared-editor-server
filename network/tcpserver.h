@@ -22,18 +22,21 @@ public:
 
 private:
     QThread *m_thread;
+    QThread *serverThread;
     TcpConnections *m_connections;
-    QMap <quint32 ,TcpConnections > connectionsByFiles;
+    QMap <quint32 , TcpConnections* > connectionsByFileId;
+    QMap <quint32 , QThread* > threadsByFileId;
     void incomingConnection(qintptr descriptor); //qint64, qHandle, qintptr, uint
     void accept(qintptr descriptor, TcpConnection *connection);
     //void addFile(QT)
 signals:
     void accepting(qintptr handle, TcpConnection *connection);
     void finished();
-
+    void addExistingConnection(TcpConnection *tcpConnection);
 public slots:
     void complete();
-    void getConnection(TcpConnection *tcpConnection);
+    void moveConnection(TcpConnection *tcpConnection);
+    void closeFile(quint32 fileid);
 };
 
 #endif // TCPSERVER_H

@@ -181,9 +181,6 @@ bool updatePasswordUser (QSqlDatabase db, User &user , QString &newPass){
     }
      return true;
 }
-
-
-
 /*
 // If -1 something goes wrong
 int userExists(QSqlQuery &q, const QString &username, QString &email)
@@ -252,6 +249,7 @@ QSqlError initDb(QString& hostname, QString& dbname, QString& port, QString& use
 
 QSqlDatabase startDb ()
 {
+    qDebug()<<"starting db in thread "<<QThread::currentThread();
     QSqlDatabase db = QSqlDatabase::addDatabase("QMYSQL",QStringLiteral("myConnection_%1").arg(qintptr(QThread::currentThreadId()), 0, 16));
     db.setHostName(hostname);
     db.setDatabaseName(dbname);
@@ -262,13 +260,11 @@ QSqlDatabase startDb ()
     return db;
 }
 
-void closeDb()
+void closeDb(QSqlDatabase db)
 {
-    {
-        QSqlDatabase db = QSqlDatabase::database();
-        db.close();
-    }
-    QSqlDatabase::removeDatabase( QSqlDatabase::defaultConnection );
+
+    db.close();
+    db.removeDatabase(db.connectionName());
     return;
 }
 

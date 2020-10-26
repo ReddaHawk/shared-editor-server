@@ -21,14 +21,12 @@ bool updateSurnameUser (QSqlDatabase db, User &user , QString &newSurname);
 
 bool updatePasswordUser (QSqlDatabase db, User &user , QString &newPass);
 
-
-
 QSqlError populateUsersTable();
 
 QSqlError initDb(QString& hostname, QString& dbname, QString& port, QString& username, QString& password);
 
 QSqlDatabase startDb();
 
-void closeDb();
+void closeDb(QSqlDatabase db);
 
 #endif // DB_H
