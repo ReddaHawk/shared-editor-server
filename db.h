@@ -33,7 +33,7 @@ QSqlError initDb(QString& hostname, QString& dbname, QString& port, QString& use
 
 QSqlDatabase startDb();
 
-void closeDb();
+void closeDb(QSqlDatabase db);
 
 void setDocumentsDirectory(QString dir);
 

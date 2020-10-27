@@ -35,4 +35,15 @@ You can see available databases with this command:
 ```bash
 mysql -p -e "SHOW databases;"
 ```
-Now you can start correctly the server
+Now you can start correctly the server.
+
+
+
+To see contents of users_table in mariadb container
+execute following commands:
+
+```bash
+mysql -uroot -p
+use serverDB;
+Select* from users_table;
+```

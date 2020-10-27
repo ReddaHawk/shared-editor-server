@@ -37,7 +37,8 @@ enum class MessageType : qint32 {
     S_NEW_OK = 13,
     S_NEW_KO = -13,
     B_EDIT = 14,
-    B_CURSOR_POS = 15
+    B_CURSOR_POS = 15,
+    C_TEST = 1000
 
 };
 

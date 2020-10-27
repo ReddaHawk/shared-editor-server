@@ -19,25 +19,35 @@
 class TcpConnection : public QObject
 {
     Q_OBJECT
+
 public:
     explicit TcpConnection(QObject *parent = nullptr);
     ~TcpConnection();
 
     void setSocket(QTcpSocket *socket);
 
-    QTcpSocket *m_socket;
     QTcpSocket* getSocket();
 
-    quint32 siteId;
+    QUuid getDocumentId();
+    void setDocumentId(QUuid documentId);
+    quint32 getSiteId();
 
 private:
-    QSqlDatabase db;
     User m_user;
     bool userLogged;
-
-    QUuid uriToDocumentId(QUrl uri);
+    QTcpSocket *m_socket;
+    quint32 siteId;
+    QUuid documentId;
 
 signals:
+    void openDocument(OpenMessage openMsg);
+    void newDocument(DocumentMessage docMsg);
+    void userLogin(User user);
+    void userRegistration(User user);
+    void userUpdateImg(User user, QByteArray img);
+    void userUpdateName(User user, QString name);
+    void userUpdateSrn(User user, QString surname);
+    void userUpdatePsw(User user, QString oldPassword, QString newPassword);
 
 public slots:
     void connected();
@@ -46,6 +56,17 @@ public slots:
     void bytesWritten(qint64 bytes);
     void stateChanged(QAbstractSocket::SocketState socketState);
     void error(QAbstractSocket::SocketError socketError);
+    // ret = 1 ok
+    // ret = 0 not ok
+    // ret = -1 errDb
+    void replyLogin(int ret, User userMessage);
+    void replyRegister(int ret, User userMessage);
+    void replyUpdateImg(int ret)  ;
+    void replyUpdateName(int ret, User userMessage);
+    void replyUpdateSurname(int ret, User userMessage);
+    void replyUpdatePassword(int ret, User userMessage);
+    void replyOpenDocument(int ret, DocumentMessage docMessage);
+    void replyNewDocument(int ret, DocumentMessage docMessage);
 
 };
 

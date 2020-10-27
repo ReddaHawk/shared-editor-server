@@ -54,5 +54,6 @@ private:
     }
 
 };
+Q_DECLARE_METATYPE(User)
 
 #endif // USER_H

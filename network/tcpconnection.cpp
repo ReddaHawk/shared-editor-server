@@ -3,35 +3,33 @@
 TcpConnection::TcpConnection(QObject *parent) : QObject(parent)
 {
     qDebug() << this << "Created";
-    db = startDb();
 
 }
 
 TcpConnection::~TcpConnection()
 {
     qDebug() << this << "Destroyed";
-    m_socket->close();
-    db.close();
-    
+    if(m_socket!=nullptr)
+    m_socket->close();  
 }
 
 void TcpConnection::setSocket(QTcpSocket *socket)
 {
     m_socket = socket;
+    if(socket == nullptr) return;
     connect(m_socket,&QTcpSocket::connected, this, &TcpConnection::connected);
-    connect(m_socket,&QTcpSocket::disconnected, this, &TcpConnection::disconnected);    
-    connect(m_socket,&QTcpSocket::readyRead, this, &TcpConnection::readyRead);    
-    connect(m_socket,&QTcpSocket::bytesWritten, this, &TcpConnection::bytesWritten);    
-    connect(m_socket,&QTcpSocket::stateChanged, this, &TcpConnection::stateChanged);  
+    connect(m_socket,&QTcpSocket::disconnected, this, &TcpConnection::disconnected);
+    connect(m_socket,&QTcpSocket::readyRead, this, &TcpConnection::readyRead);
+    connect(m_socket,&QTcpSocket::bytesWritten, this, &TcpConnection::bytesWritten);
+    connect(m_socket,&QTcpSocket::stateChanged, this, &TcpConnection::stateChanged);
     // C++ problem: when you try to set SocketError to a slot -> socketError is abstract socket not socket
-    connect(m_socket,static_cast<void (QTcpSocket::*)(QAbstractSocket::SocketError)>(&QTcpSocket::error), this, &TcpConnection::error);
-    }
+    //connect(m_socket,static_cast<void (QTcpSocket::*)(QAbstractSocket::SocketError)>(&QTcpSocket::error), this, &TcpConnection::error);
+    connect(socket, QOverload<QAbstractSocket::SocketError>::of(&QAbstractSocket::error),this, &TcpConnection::error);
+}
 
 QTcpSocket *TcpConnection::getSocket()
 {
-    // If function is not called with signal and slots return 0;
-    if(!sender()) return 0;
-    return static_cast <QTcpSocket*>(sender());
+    return m_socket;
 }
 
 void TcpConnection::connected()
@@ -47,6 +45,17 @@ void TcpConnection::disconnected()
     qDebug() << this << " disconnected "<< sender();
 }
 
+QUuid TcpConnection::getDocumentId(){
+    return documentId;
+}
+
+void TcpConnection::setDocumentId(QUuid documentId){
+    this->documentId = documentId;
+}
+
+quint32 TcpConnection::getSiteId(){
+    return siteId;
+}
 // Read data from socket
 void TcpConnection::readyRead()
 {
@@ -65,231 +74,161 @@ void TcpConnection::readyRead()
     QDataStream replyStream(m_socket);
     replyStream.setVersion(QDataStream::Qt_5_12);
     Header headerResponse;
+    //qDebug()<< "Ricevuto pacchetto nel thread: " << QThread::currentThread();
     switch(header.getType())
     {
-    case MessageType::C_LOGIN: {
+    case MessageType::C_TEST: {
 
+        socketStream >> documentId;
+        if (!socketStream.commitTransaction())
+            return;
+        qDebug()<<documentId<<" ricevuto";
+
+        headerResponse.setType(MessageType::C_TEST);
+        replyStream << headerResponse ;
+        emit openDocument(OpenMessage());
+        break;
+    }
+    case MessageType::C_LOGIN:
+    {
         User userMessage;
         socketStream >> userMessage;
         if (!socketStream.commitTransaction())
             return;
         qDebug() << "Login test: "<< userMessage.toString();
-        if(db.open()){
-        qDebug()<< "DB opened";
-        userMessage = User(userMessage.getEmail(),userMessage.getPassword());
-        if (loginUser(db,userMessage)) {
-             qDebug()<< "User "<<userMessage.getEmail()<<" has logged correctly";
-             headerResponse.setType(MessageType::S_LOGIN_OK);
-             userLogged = true;
-             m_user = User(userMessage.getUsername(),userMessage.getName(),userMessage.getSurname(),userMessage.getEmail());
-             replyStream << headerResponse << userMessage;
-        } else
-        {
-            qDebug()<< "Login ko";
-            headerResponse.setType(MessageType::S_LOGIN_KO);
+        if(userMessage.getEmail().isEmpty() || userMessage.getPassword().isEmpty()){
+            headerResponse.setType(MessageType::S_INPUT_KO);
             replyStream << headerResponse;
+
         }
-        db.close();
-        } else {
-            qDebug() << "Error DB " << db.lastError();
-            // Error db
-            headerResponse.setType(MessageType::S_ERROR_DB);
-            replyStream << headerResponse;
+        else {
+            userMessage = User(userMessage.getEmail(),userMessage.getPassword());
+            emit userLogin(userMessage);
         }
+
+
         break;
     }
     case MessageType::C_REGISTER:{
         User userMessage;
 
         socketStream >> userMessage;
+
         if (!socketStream.commitTransaction())
             return;
         qDebug()<< "received: " << userMessage.getImage().size();
-        if(db.open()){
-            //qDebug() << "REGISTER: " << userMessage.toString();
-
-            userMessage = User(userMessage.getUsername(),userMessage.getName(),userMessage.getSurname(),
-                               userMessage.getEmail(),userMessage.getPassword(),userMessage.getImage());
-            if(signUser(db,userMessage))
-            {
-                qDebug() << "REG OK";
-                headerResponse.setType(MessageType::S_REGISTER_OK);
-                userLogged=true;
-                m_user = User(userMessage.getUsername(),userMessage.getName(),userMessage.getSurname(),userMessage.getEmail());
-                replyStream << headerResponse;
-            } else
-            {
-                qDebug() << "REG KO";
-                headerResponse.setType(MessageType::S_REGISTER_KO);
-                replyStream << headerResponse;
-
-            }
-            db.close();
-        }
-        else {
-            // Error db
-            headerResponse.setType(MessageType::S_ERROR_DB);
+        if(userMessage.getUsername().isEmpty() || userMessage.getName().isEmpty() || userMessage.getSurname().isEmpty() ||
+                userMessage.getEmail().isEmpty() || userMessage.getPassword().isEmpty() || userMessage.getImage().isEmpty() )
+        {
+            headerResponse.setType(MessageType::S_INPUT_KO);
             replyStream << headerResponse;
+            break;
         }
+        userMessage = User(userMessage.getUsername(),userMessage.getName(),userMessage.getSurname(),
+                           userMessage.getEmail(),userMessage.getPassword(),userMessage.getImage());
+        emit userRegistration(userMessage);
         break;
     }
     case MessageType::C_UPD_IMG:{
+        User userMessage;
+        socketStream >> userMessage;
+        if (!socketStream.commitTransaction())
+            return;
         if(!userLogged){
             headerResponse.setType(MessageType::S_NOT_LOGGED);
             replyStream << headerResponse;
             break;
         }
-        User userMessage;
-        socketStream >> userMessage;
-        if (!socketStream.commitTransaction())
-            return;
-        qDebug()<< "Received new image with size: " << userMessage.getImage().size();
-        if(db.open()){
-            if(updateImgUser(db,m_user,userMessage.getImage()))
-            {
-                qDebug() << "UPD IMG OK";
-                headerResponse.setType(MessageType::S_UPD_OK);
-                replyStream << headerResponse;
-            } else
-            {
-                qDebug() << "UPD IMG KO";
-                headerResponse.setType(MessageType::S_UPD_KO);
-                replyStream << headerResponse;
-            }
-          db.close();
-        } else {
-            // Error db
-            headerResponse.setType(MessageType::S_ERROR_DB);
+
+
+        if(userMessage.getImage().isEmpty())
+        {
+            headerResponse.setType(MessageType::S_INPUT_KO);
             replyStream << headerResponse;
+            break;
         }
+        qDebug()<< "Received new image with size: " << userMessage.getImage().size();
+        emit userUpdateImg(m_user,userMessage.getImage());
 
         break;
     }
     case MessageType::C_UPD_NAME:{
+        User userMessage;
+        socketStream >> userMessage;
+        if (!socketStream.commitTransaction())
+            return;
         if(!userLogged){
             headerResponse.setType(MessageType::S_NOT_LOGGED);
             replyStream << headerResponse;
             break;
         }
-        User userMessage;
-        socketStream >> userMessage;
-        if (!socketStream.commitTransaction())
-            return;
-        qDebug()<< "Received new name " << userMessage.getName();
-        if(db.open()){
-            if(updateNameUser(db,m_user,userMessage.getName()))
-            {
-                qDebug() << "UPD Name OK";
-                headerResponse.setType(MessageType::S_UPD_OK);
-                m_user = User(m_user.getUsername(),userMessage.getName(),m_user.getSurname(),m_user.getEmail());
-                replyStream << headerResponse;
-            } else
-            {
-                qDebug() << "UPD Name KO";
-                headerResponse.setType(MessageType::S_UPD_KO);
-                replyStream << headerResponse;
-            }
-          db.close();
-        } else {
-            // Error db
-            headerResponse.setType(MessageType::S_ERROR_DB);
+
+        if(userMessage.getName().isEmpty())
+        {
+            headerResponse.setType(MessageType::S_INPUT_KO);
             replyStream << headerResponse;
+            break;
         }
+        qDebug()<< "Received new name " << userMessage.getName();
+        emit userUpdateName(m_user,userMessage.getName());
 
         break;
     }
     case MessageType::C_UPD_SURN:{
+        User userMessage;
+        socketStream >> userMessage;
+        if (!socketStream.commitTransaction())
+            return;
         if(!userLogged){
             headerResponse.setType(MessageType::S_NOT_LOGGED);
             replyStream << headerResponse;
             break;
         }
-        User userMessage;
-        socketStream >> userMessage;
-        if (!socketStream.commitTransaction())
-            return;
-        qDebug()<< "Received new surname " << userMessage.getName();
-        if(db.open()){
-            if(updateSurnameUser(db,m_user,userMessage.getSurname()))
-            {
-                qDebug() << "UPD Surname OK";
-                m_user = User(m_user.getUsername(),m_user.getName(),userMessage.getSurname(),m_user.getEmail());
-                headerResponse.setType(MessageType::S_UPD_OK);
-                replyStream << headerResponse;
-            } else
-            {
-                qDebug() << "UPD Surname KO";
-                headerResponse.setType(MessageType::S_UPD_KO);
-                replyStream << headerResponse;
-            }
-          db.close();
-        } else {
-            // Error db
-            headerResponse.setType(MessageType::S_ERROR_DB);
+        if(userMessage.getSurname().isEmpty())
+        {
+            headerResponse.setType(MessageType::S_INPUT_KO);
             replyStream << headerResponse;
+            break;
         }
+        qDebug()<< "Received new surname " << userMessage.getName();
+        emit userUpdateSrn(m_user,userMessage.getSurname());
 
         break;
     }
         // Old password is sent over email field. This allow us to not create a new class for updt psw.
     case MessageType::C_UPD_PASS:{
+        User userMessage;
+        socketStream >> userMessage;
+        if (!socketStream.commitTransaction())
+            return;
         if(!userLogged){
             headerResponse.setType(MessageType::S_NOT_LOGGED);
             replyStream << headerResponse;
             break;
         }
-        User userMessage;
-        socketStream >> userMessage;
-        if (!socketStream.commitTransaction())
-            return;
-        qDebug()<< "Received new name " << userMessage.getName();
-        if(db.open()){
-            // Create tmp user to see if old psw is correct.
-            User tmp(m_user.getEmail(),userMessage.getEmail());
-            if(loginUser(db,tmp))
-            {
-                // Hash password
-                tmp = User(m_user.getEmail(),userMessage.getPassword());
-                if(updatePasswordUser(db,m_user,tmp.getPassword()))
-                {
-                    qDebug() << "UPD psw OK";
-                    headerResponse.setType(MessageType::S_UPD_OK);
-                    replyStream << headerResponse;
-                } else
-                {
-                    qDebug() << "UPD psw KO";
-                    headerResponse.setType(MessageType::S_UPD_KO);
-                    replyStream << headerResponse;
-                }
-            } else
-            {
-                qDebug() << "Old psw not correct";
-                headerResponse.setType(MessageType::S_INPUT_KO);
-                replyStream << headerResponse;
-            }
-          db.close();
-        } else {
-            // Error db
-            headerResponse.setType(MessageType::S_ERROR_DB);
+
+        if(userMessage.getEmail().isEmpty()|| userMessage.getPassword().isEmpty())
+        {
+            headerResponse.setType(MessageType::S_INPUT_KO);
             replyStream << headerResponse;
+            break;
         }
+        qDebug()<< "Received updatePSW ";
+        emit userUpdatePsw(m_user,userMessage.getEmail(),userMessage.getPassword());
 
         break;
     }
 
     case MessageType::C_OPEN: {
+        OpenMessage openMsg;
+        socketStream >> openMsg;
+        if (!socketStream.commitTransaction())
+            return;
         if(!userLogged){
             headerResponse.setType(MessageType::S_NOT_LOGGED);
             replyStream << headerResponse;
             break;
         }
-
-        OpenMessage openMsg;
-        socketStream >> openMsg;
-        if (!socketStream.commitTransaction())
-            return;
-
-        qDebug() << "Received document open request";
 
         if(siteId != openMsg.getSiteId()) {
             qDebug() << "Wrong siteId";
@@ -297,110 +236,28 @@ void TcpConnection::readyRead()
             replyStream << headerResponse;
             break;
         }
+        qDebug() << "Received document open request";
+        emit openDocument(openMsg);
 
-        if(db.open()) {
-            QUuid documentId = uriToDocumentId(openMsg.getUri());
-            DocumentEntity docEntity(documentId);
-            if (findDocument(db, docEntity)) {
-                QFile docFile{docEntity.getPath(), this};
-                if (docFile.open(QIODevice::ReadOnly)) {
-                    QDataStream docFileStream(&docFile);
-                    QVector<Symbol> docSymbols;
-
-                    while(true) {
-                        Symbol tempSym;
-                        docFileStream.startTransaction();
-                        docFileStream >> tempSym;
-                        if (docFileStream.commitTransaction()) {
-                            docSymbols << tempSym;
-                        } else {
-                            break;
-                        }
-                    }
-
-                    docFile.close();
-
-                    DocumentMessage docMsg(docEntity.getDocumentId(),
-                                           docEntity.getOwnerEmail(),
-                                           docEntity.getName(),
-                                           docEntity.getDate(),
-                                           docSymbols);
-
-                    headerResponse.setType(MessageType::S_OPEN_OK);
-                    replyStream << headerResponse << docMsg;
-                    break;
-                } else {
-                    qDebug() << "Open failed";
-                    headerResponse.setType(MessageType::S_OPEN_KO);
-                    replyStream << headerResponse;
-                    break;
-                }
-            } else {
-                qDebug() << "Open failed: documentId does not exists";
-                headerResponse.setType(MessageType::S_OPEN_KO);
-                replyStream << headerResponse;
-                break;
-            }
-
-            db.close();
-        } else {
-            // Error db
-            headerResponse.setType(MessageType::S_ERROR_DB);
-            replyStream << headerResponse;
-        }
-
+        break;
     }
 
     case MessageType::C_NEW: {
+        DocumentMessage docMsg;
+        socketStream >> docMsg;
+        if (!socketStream.commitTransaction())
+            return;
         if(!userLogged){
             headerResponse.setType(MessageType::S_NOT_LOGGED);
             replyStream << headerResponse;
             break;
         }
 
-        DocumentMessage docMsg;
-        socketStream >> docMsg;
-        if (!socketStream.commitTransaction())
-            return;
 
         qDebug() << "Received document creation request";
+        emit newDocument(docMsg);
 
-        if(db.open()) {
-            QUuid newDocumentId = QUuid::createUuid();
-            QString docPath = createDocumentPath(newDocumentId);
-            DocumentEntity newDocEntity{newDocumentId, docMsg.getOwnerEmail(), docMsg.getName(), docPath};
-            QFile docFile{docPath, this};
-            if (docFile.open(QIODevice::WriteOnly)) {
-                QDataStream docFileStream(&docFile);
-
-                foreach (Symbol sym, docMsg.getSymbols()) {
-                    docFileStream << sym;
-                }
-
-                docFile.close();
-
-                DocumentMessage docMsg(newDocumentId,
-                                       newDocEntity.getOwnerEmail(),
-                                       newDocEntity.getName(),
-                                       newDocEntity.getDate(),
-                                       QVector<Symbol>()); // reply with empty vector
-
-                headerResponse.setType(MessageType::S_NEW_OK);
-                replyStream << headerResponse << docMsg;
-                break;
-            } else {
-                qDebug() << "Creation failed: file does not exists";
-                headerResponse.setType(MessageType::S_NEW_KO);
-                replyStream << headerResponse;
-                break;
-            }
-
-            db.close();
-        } else {
-            // Error db
-            headerResponse.setType(MessageType::S_ERROR_DB);
-            replyStream << headerResponse;
-        }
+        break;
     }
 
     case MessageType::B_EDIT: {
@@ -447,19 +304,6 @@ void TcpConnection::readyRead()
             return;
 
     }
-    /*
-    if(header.getType() == MessageType::C_LOGIN)
-    {
-        UserMessage message;
-        qDebug() << "Login message";
-        qDebug() << this << " readyRead "<< sender();
-        socketStream >> message;
-        qDebug() << message.toString();
-        //qDebug() << "Socket has received: " << m_socket->readAll();
-    }
-    */
-       // wait for more data
-
 }
 
 // Write data in socket
@@ -472,7 +316,7 @@ void TcpConnection::bytesWritten(qint64 bytes)
 void TcpConnection::stateChanged(QAbstractSocket::SocketState socketState)
 {
     if(!sender()) return;
-    qDebug() << this << " stateChanged "<< sender() << " state " << socketState;
+    qDebug() << this << " stateChanged "<< sender() << " state " << socketState << " thread " << QThread::currentThread();
 }
 
 void TcpConnection::error(QAbstractSocket::SocketError socketError)
@@ -482,9 +326,219 @@ void TcpConnection::error(QAbstractSocket::SocketError socketError)
 
 }
 
-QUuid TcpConnection::uriToDocumentId(QUrl uri)
+// ret = 1 ok
+// ret = 0 not ok
+// ret = -1 errDb
+void TcpConnection::replyLogin(int ret, User userMessage)
 {
-    return QUuid(uri.authority());
+    Header headerResponse;
+    QDataStream replyStream(m_socket);
+    replyStream.setVersion(QDataStream::Qt_5_12);
+    qDebug()<<"Login user con ret "<<ret;
+    if(ret==1)
+    {
+        qDebug()<< "User "<<userMessage.getEmail()<<" has logged correctly";
+        headerResponse.setType(MessageType::S_LOGIN_OK);
+        userLogged = true;
+        m_user = User(userMessage.getUsername(),userMessage.getName(),userMessage.getSurname(),userMessage.getEmail());
+        replyStream << headerResponse << userMessage;
+    }
+    if(ret==0)
+    {
+        qDebug()<< "Login ko";
+        headerResponse.setType(MessageType::S_LOGIN_KO);
+        replyStream << headerResponse;
+    }
+    if(ret==-1)
+    {
+        // Error db
+        headerResponse.setType(MessageType::S_ERROR_DB);
+        replyStream << headerResponse;
+    }
+
+}
+void TcpConnection::replyRegister(int ret, User userMessage)
+{
+    Header headerResponse;
+    QDataStream replyStream(m_socket);
+    replyStream.setVersion(QDataStream::Qt_5_12);
+    if(ret == 1)
+    {
+        qDebug() << "REG OK";
+        headerResponse.setType(MessageType::S_REGISTER_OK);
+        userLogged=true;
+        m_user = User(userMessage.getUsername(),userMessage.getName(),userMessage.getSurname(),userMessage.getEmail());
+        replyStream << headerResponse;
+    }
+    if(ret == 0)
+    {
+        qDebug() << "REG KO";
+        headerResponse.setType(MessageType::S_REGISTER_KO);
+        replyStream << headerResponse;
+
+    }
+    if(ret == -1)
+    {
+        // Error db
+        headerResponse.setType(MessageType::S_ERROR_DB);
+        replyStream << headerResponse;
+    }
+}
+void TcpConnection::replyUpdateImg(int ret)
+{
+    Header headerResponse;
+    QDataStream replyStream(m_socket);
+    replyStream.setVersion(QDataStream::Qt_5_12);
+    if(ret == 1)
+    {
+        qDebug() << "UPD IMG OK";
+        headerResponse.setType(MessageType::S_UPD_OK);
+        replyStream << headerResponse;
+    }
+    if(ret == 0)
+    {
+        qDebug() << "UPD IMG KO";
+        headerResponse.setType(MessageType::S_UPD_KO);
+        replyStream << headerResponse;
+
+    }
+    if(ret == -1)
+    {
+        // Error db
+        headerResponse.setType(MessageType::S_ERROR_DB);
+        replyStream << headerResponse;
+    }
 }
 
+void TcpConnection::replyUpdateName(int ret, User userMessage)
+{
+    Header headerResponse;
+    QDataStream replyStream(m_socket);
+    replyStream.setVersion(QDataStream::Qt_5_12);
+    if(ret == 1)
+    {
+        qDebug() << "UPD Name OK";
+        headerResponse.setType(MessageType::S_UPD_OK);
+        m_user = User(m_user.getUsername(),userMessage.getName(),m_user.getSurname(),m_user.getEmail());
+        replyStream << headerResponse;
+    }
+    if(ret == 0)
+    {
+        qDebug() << "UPD Name KO";
+        headerResponse.setType(MessageType::S_UPD_KO);
+        replyStream << headerResponse;
+
+    }
+    if(ret == -1)
+    {
+        // Error db
+        headerResponse.setType(MessageType::S_ERROR_DB);
+        replyStream << headerResponse;
+    }
+}
+
+void TcpConnection::replyUpdateSurname(int ret, User userMessage)
+{
+    Header headerResponse;
+    QDataStream replyStream(m_socket);
+    replyStream.setVersion(QDataStream::Qt_5_12);
+    if(ret == 1)
+    {
+        qDebug() << "UPD Surname OK";
+        m_user = User(m_user.getUsername(),m_user.getName(),userMessage.getSurname(),m_user.getEmail());
+        headerResponse.setType(MessageType::S_UPD_OK);
+        replyStream << headerResponse;
+    }
+    if(ret == 0)
+    {
+        qDebug() << "UPD Name KO";
+        headerResponse.setType(MessageType::S_UPD_KO);
+        replyStream << headerResponse;
+
+    }
+    if(ret == -1)
+    {
+        // Error db
+        headerResponse.setType(MessageType::S_ERROR_DB);
+        replyStream << headerResponse;
+    }
+}
+
+void TcpConnection::replyUpdatePassword(int ret, User userMessage)
+{
+    Header headerResponse;
+    QDataStream replyStream(m_socket);
+    replyStream.setVersion(QDataStream::Qt_5_12);
+    if(ret == 1)
+    {
+        qDebug() << "UPD psw OK";
+        headerResponse.setType(MessageType::S_UPD_OK);
+        replyStream << headerResponse;
+    }
+    if(ret == 0)
+    {
+        qDebug() << "UPD psw KO";
+        headerResponse.setType(MessageType::S_UPD_KO);
+        replyStream << headerResponse;
+
+    }
+    if(ret == -1)
+    {
+        // Error db
+        headerResponse.setType(MessageType::S_ERROR_DB);
+        replyStream << headerResponse;
+    }
+}
+
+void TcpConnection::replyOpenDocument(int ret, DocumentMessage docMessage)
+{
+    Header headerResponse;
+    QDataStream replyStream(m_socket);
+    replyStream.setVersion(QDataStream::Qt_5_12);
+    if(ret == 1)
+    {
+        qDebug() << "OPEN OK";
+        headerResponse.setType(MessageType::S_OPEN_OK);
+        replyStream << headerResponse << docMessage;
+    }
+    if(ret == 0)
+    {
+        qDebug() << "OPEN KO";
+        headerResponse.setType(MessageType::S_OPEN_KO);
+        replyStream << headerResponse;
+
+    }
+    if(ret == -1)
+    {
+        // Error db
+        headerResponse.setType(MessageType::S_ERROR_DB);
+        replyStream << headerResponse;
+    }
+}
+
+void TcpConnection::replyNewDocument(int ret, DocumentMessage docMessage)
+{
+    Header headerResponse;
+    QDataStream replyStream(m_socket);
+    replyStream.setVersion(QDataStream::Qt_5_12);
+    if(ret == 1)
+    {
+        qDebug() << "NEW OK";
+        headerResponse.setType(MessageType::S_NEW_OK);
+        replyStream << headerResponse << docMessage;
+    }
+    if(ret == 0)
+    {
+        qDebug() << "NEW KO";
+        headerResponse.setType(MessageType::S_NEW_KO);
+        replyStream << headerResponse;
+
+    }
+    if(ret == -1)
+    {
+        // Error db
+        headerResponse.setType(MessageType::S_ERROR_DB);
+        replyStream << headerResponse;
+    }
+}
 
