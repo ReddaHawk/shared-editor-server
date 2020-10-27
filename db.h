@@ -37,6 +37,6 @@ void closeDb(QSqlDatabase db);
 
 void setDocumentsDirectory(QString dir);
 
-QString createDocumentPath(QUuid documentId);
+QString documentIdToDocumentPath(QUuid documentId);
 
 #endif // DB_H

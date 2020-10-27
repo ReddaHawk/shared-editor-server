@@ -348,6 +348,6 @@ void setDocumentsDirectory(QString dir) {
     documentsDirectory = QDir(dir);
 }
 
-QString createDocumentPath(QUuid documentId) {
+QString documentIdToDocumentPath(QUuid documentId) {
     return documentsDirectory.filePath(documentId.toString());
 }

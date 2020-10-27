@@ -10,8 +10,10 @@ TcpConnections::TcpConnections(QThread *serverThread) : serverThread(serverThrea
     qDebug() << this << "created on thread " << QThread::currentThread();
 }
 
-TcpConnections::TcpConnections(QThread *serverThread, QUuid documentId) : serverThread(serverThread), documentId(documentId), removable(true)
+TcpConnections::TcpConnections(QThread *serverThread, QUuid documentId) : serverThread(serverThread), removable(true)
 {
+    this->documentId = documentId;
+    this->documentFile = new QFile(documentIdToDocumentPath(documentId), this);
     qDebug() << this << "created on thread " << QThread::currentThread();
 }
 
@@ -287,7 +289,7 @@ void TcpConnections::moveConnectionAndCreateDocument(DocumentMessage newDocMsg)
         delete documentFile;
         tcpConnection->setDocumentId(QUuid());
     } else {
-        QString newDocPath = createDocumentPath(documentId);
+        QString newDocPath = documentIdToDocumentPath(documentId);
         DocumentEntity newDocEntity{documentId, newDocMsg.getOwnerEmail(), newDocMsg.getName(), newDocPath};
         DocumentMessage docMsg;
         int ret;
