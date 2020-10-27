@@ -42,12 +42,14 @@ private:
 signals:
     void openDocument(OpenMessage openMsg);
     void newDocument(DocumentMessage docMsg);
+    void editDocument(EditingMessage editMsg);
     void userLogin(User user);
     void userRegistration(User user);
     void userUpdateImg(User user, QByteArray img);
     void userUpdateName(User user, QString name);
     void userUpdateSrn(User user, QString surname);
     void userUpdatePsw(User user, QString oldPassword, QString newPassword);
+    void changeCursorPosition(CursorPositionMessage curPosMsg);
 
 public slots:
     void connected();

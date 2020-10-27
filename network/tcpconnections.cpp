@@ -10,10 +10,8 @@ TcpConnections::TcpConnections(QThread *serverThread) : serverThread(serverThrea
     qDebug() << this << "created on thread " << QThread::currentThread();
 }
 
-TcpConnections::TcpConnections(QThread *serverThread, QUuid documentId) : serverThread(serverThread), removable(true)
+TcpConnections::TcpConnections(QThread *serverThread, QUuid documentId) : serverThread(serverThread), removable(true), documentId(documentId)
 {
-    this->documentId = documentId;
-    this->documentFile = new QFile(documentIdToDocumentPath(documentId), this);
     qDebug() << this << "created on thread " << QThread::currentThread();
 }
 
@@ -66,6 +64,7 @@ void TcpConnections::removeSocket(QTcpSocket *socket)
         emit closeFile(documentId);
         documentId = QUuid();
         delete documentFile;
+        delete serverEditor;
     }
     qDebug() << this << " client count = " << m_connections.count();
 
@@ -113,6 +112,8 @@ void TcpConnections::start()
     qDebug() << this << " connections started on " << QThread::currentThread();
     db = startDb();
     qDebug() << "db started "<<db;
+
+    documentFile = new QFile(documentIdToDocumentPath(documentId), this);
 }
 
 void TcpConnections::quit()
@@ -170,12 +171,14 @@ void TcpConnections::accept(qintptr handle, TcpConnection *connection)
     connection->moveToThread(QThread::currentThread());
     connect(connection, &TcpConnection::openDocument,this,&TcpConnections::moveConnectionAndOpenDocument);
     connect(connection, &TcpConnection::newDocument,this,&TcpConnections::moveConnectionAndCreateDocument);
+    connect(connection, &TcpConnection::editDocument,this,&TcpConnections::editDocument);
     connect(connection, &TcpConnection::userLogin,this,&TcpConnections::loginUserDB);
     connect(connection, &TcpConnection::userRegistration,this,&TcpConnections::registerUser);
     connect(connection, &TcpConnection::userUpdateImg,this,&TcpConnections::updateImgUserDB);
     connect(connection, &TcpConnection::userUpdateName,this,&TcpConnections::updateNameUserDB);
     connect(connection, &TcpConnection::userUpdateSrn,this,&TcpConnections::updateSrnUserDB);
     connect(connection, &TcpConnection::userUpdatePsw,this,&TcpConnections::updatePswUserDB);
+    connect(connection, &TcpConnection::changeCursorPosition,this,&TcpConnections::changeCursorPosition);
     connection->setSocket(socket);
     m_connections.insert(socket, connection);
     qDebug() << this << " clients = " << m_connections.count();
@@ -206,8 +209,9 @@ void TcpConnections::moveConnectionAndOpenDocument(OpenMessage openMsg)
         qDebug() <<"No more clients for this file: "<<documentId;
         emit closeFile(documentId);
         documentId = QUuid();
-        delete documentFile;
         tcpConnection->setDocumentId(QUuid());
+        delete documentFile;
+        delete serverEditor;
     } else {
         DocumentEntity docEntity(documentId);
         DocumentMessage docMsg;
@@ -233,6 +237,8 @@ void TcpConnections::moveConnectionAndOpenDocument(OpenMessage openMsg)
                     }
 
                     documentFile->close();
+
+                    serverEditor = new ServerEditor(docSymbols);
 
                     docMsg = DocumentMessage(docEntity.getDocumentId(),
                                              docEntity.getOwnerEmail(),
@@ -286,8 +292,9 @@ void TcpConnections::moveConnectionAndCreateDocument(DocumentMessage newDocMsg)
         qDebug() <<"No more clients for this file: "<<documentId;
         emit closeFile(documentId);
         documentId = QUuid();
-        delete documentFile;
         tcpConnection->setDocumentId(QUuid());
+        delete documentFile;
+        delete serverEditor;
     } else {
         QString newDocPath = documentIdToDocumentPath(documentId);
         DocumentEntity newDocEntity{documentId, newDocMsg.getOwnerEmail(), newDocMsg.getName(), newDocPath};
@@ -306,6 +313,8 @@ void TcpConnections::moveConnectionAndCreateDocument(DocumentMessage newDocMsg)
                     }
 
                     documentFile->close();
+
+                    serverEditor = new ServerEditor(docMsg.getSymbols());
 
                     docMsg = DocumentMessage(documentId,
                                              newDocEntity.getOwnerEmail(),
@@ -494,6 +503,17 @@ void TcpConnections::updatePswUserDB(User user, QString oldPassword, QString new
                                   Qt::QueuedConnection,     // connection type
                                   Q_ARG(int, ret),
                                   Q_ARG(User, user));     // parametersC
+}
+
+void TcpConnections::editDocument(EditingMessage editMsg)
+{
+    serverEditor->process(editMsg);
+    //TODO: multicast to other clients
+}
+
+void TcpConnections::changeCursorPosition(CursorPositionMessage curPosMsg)
+{
+    //TODO: multicast to other clients
 }
 
 QUuid TcpConnections::uriToDocumentId(QUrl uri)

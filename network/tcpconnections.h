@@ -8,6 +8,7 @@
 #include <QMap>
 #include <QReadWriteLock>
 #include "tcpconnection.h"
+#include "servereditor.h"
 
 class TcpConnections : public QObject
 {
@@ -32,6 +33,8 @@ QFile *documentFile;
 QUuid documentId;
 QUuid uriToDocumentId(QUrl uri);
 
+ServerEditor *serverEditor;
+
 signals:
     void quitting();
     void finished();
@@ -52,6 +55,8 @@ public slots:
     void updateImgUserDB(User user, QByteArray img);
     void updateSrnUserDB(User user, QString surname);
     void updatePswUserDB(User user, QString oldPsw, QString newPsw);
+    void editDocument(EditingMessage editMsg);
+    void changeCursorPosition(CursorPositionMessage curPosMsg);
 
     // Server receives the connection and push a signal to this slot. This slot accept a handle 
     // and not the socket because it is executed in other thread
