@@ -274,10 +274,9 @@ void TcpConnection::readyRead()
             return;
 
         qDebug() << "Received edit request";
+        emit editDocument(editMsg);
 
-        //TODO: process into local text editor
-        //TODO: cast to other remote users
-
+        break;
     }
 
     case MessageType::B_CURSOR_POS: {
@@ -294,8 +293,9 @@ void TcpConnection::readyRead()
             return;
 
         qDebug() << "Received cursor position change request";
+        emit changeCursorPosition(curPosMsg);
 
-        //TODO: cast to other remote users
+        break;
     }
 
     default:
