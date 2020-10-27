@@ -30,6 +30,14 @@ enum class MessageType : qint32 {
     // If user instert wrong old passw
     S_UPD_KO = -7,
     S_NOT_LOGGED= -8,
+    C_OPEN = 10,
+    S_OPEN_OK = 11,
+    S_OPEN_KO = -11,
+    C_NEW = 12,
+    S_NEW_OK = 13,
+    S_NEW_KO = -13,
+    B_EDIT = 14,
+    B_CURSOR_POS = 15,
     C_TEST = 1000
 
 };

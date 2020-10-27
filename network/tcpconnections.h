@@ -16,7 +16,7 @@ class TcpConnections : public QObject
 public:
     explicit TcpConnections(QObject *parent = nullptr);
     explicit TcpConnections(QThread *serverThread);
-    explicit TcpConnections(QThread *serverThread, quint32 fileId);
+    explicit TcpConnections(QThread *serverThread, QUuid documentId);
 
     ~TcpConnections();
     int count();
@@ -28,17 +28,20 @@ void removeSocket(QTcpSocket *socket);
 void removeConnection(TcpConnection *tcpConnection);
 bool removable = false;
 
-quint32 fileId;
+QFile *documentFile;
+QUuid documentId;
+QUuid uriToDocumentId(QUrl uri);
 
 signals:
     void quitting();
     void finished();
     void pushConnection(TcpConnection *tcpConnection);
-    void closeFile(quint32 fileId);
+    void closeFile(QUuid documentId);
 protected slots:
     void disconnected();
     void error(QAbstractSocket::SocketError socketError);
-    void moveConnection(quint32 fileId);
+    void moveConnectionAndOpenDocument(OpenMessage openMsg);
+    void moveConnectionAndCreateDocument(DocumentMessage newDocMsg);
 public slots:
     void start();
     void quit();

@@ -8,6 +8,7 @@
 #include <QDebug>
 #include <QSqlError>
 #include <QStackedWidget>
+#include <QFileDialog>
 #include "db.h"
 #include "network/tcpserver.h"
 
@@ -29,6 +30,8 @@ private slots:
     void on_pushButton_startServer_clicked();
 
     void on_pushButton_stopServer_clicked();
+
+    void on_pushButton_selectDocsPath_clicked();
 
 private:
     Ui::MainWindow *ui;

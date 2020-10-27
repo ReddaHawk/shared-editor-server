@@ -87,13 +87,13 @@ void TcpServer::complete()
 
 
 void TcpServer::moveConnection(TcpConnection *tcpConnection){
-    quint32 file = tcpConnection->getFileId();
+    QUuid file = tcpConnection->getDocumentId();
     QTcpSocket *socket = tcpConnection->getSocket();
     TcpConnection *connection = tcpConnection;
-    if(connectionsByFileId.contains(file)){
-        qDebug()<<"File still opened: "<<tcpConnection->getFileId();
-        QThread *connectionThread = threadsByFileId.value(file);
-        TcpConnections *tcpConnections = connectionsByFileId.value(file);
+    if(connectionsByDocumentId.contains(file)){
+        qDebug()<<"File already opened: "<<tcpConnection->getDocumentId();
+        QThread *connectionThread = threadsByDocumentId.value(file);
+        TcpConnections *tcpConnections = connectionsByDocumentId.value(file);
         connection->moveToThread(connectionThread);
         socket->moveToThread(connectionThread);
         QMetaObject::invokeMethod(    tcpConnections,        // pointer to a QObject
@@ -104,11 +104,11 @@ void TcpServer::moveConnection(TcpConnection *tcpConnection){
 
     } else
     {
-        qDebug()<<"Create thread and new structure for a new file "<<tcpConnection->getFileId();
+        qDebug()<<"Create thread and new structure for a new file "<<tcpConnection->getDocumentId();
         QThread *newThread = new QThread(this);
-        TcpConnections *tcpConnections = new TcpConnections(QThread::currentThread(),connection->getFileId());
-        connectionsByFileId.insert(file,tcpConnections);
-        threadsByFileId.insert(file,newThread);
+        TcpConnections *tcpConnections = new TcpConnections(QThread::currentThread(),connection->getDocumentId());
+        connectionsByDocumentId.insert(file,tcpConnections);
+        threadsByDocumentId.insert(file,newThread);
         connect(this,&TcpServer::finished,tcpConnections,&TcpConnections::quit, Qt::QueuedConnection);
         connect(tcpConnections,&TcpConnections::pushConnection,this,&TcpServer::moveConnection,Qt::QueuedConnection);
         connect(newThread,&QThread::started,tcpConnections,&TcpConnections::start, Qt::QueuedConnection);
@@ -124,33 +124,33 @@ void TcpServer::moveConnection(TcpConnection *tcpConnection){
                                       Q_ARG(QTcpSocket*, socket),
                                       Q_ARG(TcpConnection*, connection));     // parametersC
     }
-    for(auto key : connectionsByFileId.keys())
+    for(auto key : connectionsByDocumentId.keys())
     {
-        qDebug()<<"connections {"<<key<<" : " <<connectionsByFileId.value(key)<<"}";
+        qDebug()<<"connections {"<<key<<" : " <<connectionsByDocumentId.value(key)<<"}";
     }
-    for(auto key : threadsByFileId.keys())
+    for(auto key : threadsByDocumentId.keys())
     {
-        qDebug()<<"threads {"<<key<<" : " <<threadsByFileId.value(key)<<"}";
+        qDebug()<<"threads {"<<key<<" : " <<threadsByDocumentId.value(key)<<"}";
     }
 
 }
 
-void TcpServer::closeFile(quint32 fileId)
+void TcpServer::closeFile(QUuid documentId)
 {
 
-    if(!threadsByFileId.value(fileId))
+    if(!threadsByDocumentId.value(documentId))
     {
         qWarning() << this << "exiting complete there was no thread!";
         return;
     }
-    qDebug() << this << "Closing file: "<<fileId;
-    delete connectionsByFileId.value(fileId);
-    connectionsByFileId.remove(fileId);
+    qDebug() << this << "Closing file: "<<documentId;
+    delete connectionsByDocumentId.value(documentId);
+    connectionsByDocumentId.remove(documentId);
     qDebug() << this << "Quitting thread";
-    threadsByFileId.value(fileId)->quit();
-    threadsByFileId.value(fileId)->wait();
-    delete threadsByFileId.value(fileId);
-    threadsByFileId.remove(fileId);
+    threadsByDocumentId.value(documentId)->quit();
+    threadsByDocumentId.value(documentId)->wait();
+    delete threadsByDocumentId.value(documentId);
+    threadsByDocumentId.remove(documentId);
     qDebug() << this << "complete";
 
 }

@@ -3,6 +3,7 @@
 #include <QtSql>
 #include <iostream>
 #include "user.h"
+#include "DocumentEntity.h"
 
 
 void addUser(QSqlQuery &q, User &user);
@@ -21,6 +22,11 @@ bool updateSurnameUser (QSqlDatabase db, User &user , QString &newSurname);
 
 bool updatePasswordUser (QSqlDatabase db, User &user , QString &newPass);
 
+bool addDocument(QSqlDatabase db, DocumentEntity &document);
+
+bool findDocument(QSqlDatabase db, DocumentEntity &document);
+
+
 QSqlError populateUsersTable();
 
 QSqlError initDb(QString& hostname, QString& dbname, QString& port, QString& username, QString& password);
@@ -28,5 +34,9 @@ QSqlError initDb(QString& hostname, QString& dbname, QString& port, QString& use
 QSqlDatabase startDb();
 
 void closeDb(QSqlDatabase db);
+
+void setDocumentsDirectory(QString dir);
+
+QString createDocumentPath(QUuid documentId);
 
 #endif // DB_H

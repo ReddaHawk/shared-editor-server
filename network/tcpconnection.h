@@ -6,17 +6,19 @@
 #include <QTcpSocket>
 #include <QDataStream>
 #include "messages/header.h"
-#include "messages/message.h"
+#include "messages/usermessage.h"
+#include "messages/openmessage.h"
+#include "messages/documentmessage.h"
+#include "messages/editingmessage.h"
+#include "messages/cursorpositionmessage.h"
 #include "user.h"
+#include "DocumentDTO.h"
 #include "db.h"
 #include "messages/messageType.h"
 
 class TcpConnection : public QObject
 {
     Q_OBJECT
-    QTcpSocket *m_socket;
-    quint32 siteId;
-    quint32 fileId;
 
 public:
     explicit TcpConnection(QObject *parent = nullptr);
@@ -26,17 +28,20 @@ public:
 
     QTcpSocket* getSocket();
 
-    quint32 getFileId();
+    QUuid getDocumentId();
+    void setDocumentId(QUuid documentId);
     quint32 getSiteId();
-
 
 private:
     User m_user;
     bool userLogged;
-
+    QTcpSocket *m_socket;
+    quint32 siteId;
+    QUuid documentId;
 
 signals:
-    void openFile(quint32 fileId);
+    void openDocument(OpenMessage openMsg);
+    void newDocument(DocumentMessage docMsg);
     void userLogin(User user);
     void userRegistration(User user);
     void userUpdateImg(User user, QByteArray img);
@@ -60,6 +65,8 @@ public slots:
     void replyUpdateName(int ret, User userMessage);
     void replyUpdateSurname(int ret, User userMessage);
     void replyUpdatePassword(int ret, User userMessage);
+    void replyOpenDocument(int ret, DocumentMessage docMessage);
+    void replyNewDocument(int ret, DocumentMessage docMessage);
 
 };
 

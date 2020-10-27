@@ -10,7 +10,7 @@ TcpConnections::TcpConnections(QThread *serverThread) : serverThread(serverThrea
     qDebug() << this << "created on thread " << QThread::currentThread();
 }
 
-TcpConnections::TcpConnections(QThread *serverThread, quint32 fileId) : serverThread(serverThread), fileId(fileId), removable(true)
+TcpConnections::TcpConnections(QThread *serverThread, QUuid documentId) : serverThread(serverThread), documentId(documentId), removable(true)
 {
     qDebug() << this << "created on thread " << QThread::currentThread();
 }
@@ -61,7 +61,9 @@ void TcpConnections::removeSocket(QTcpSocket *socket)
     // deleteLater() is better because if socket is deleted while used the program will crash
     socket->deleteLater();
     if(count()==0 && removable){
-        emit closeFile(fileId);
+        emit closeFile(documentId);
+        documentId = QUuid();
+        delete documentFile;
     }
     qDebug() << this << " client count = " << m_connections.count();
 
@@ -134,7 +136,7 @@ void TcpConnections::acceptConnection(QTcpSocket *socket, TcpConnection *connect
     connect(socket,&QTcpSocket::disconnected,this,&TcpConnections::disconnected);
     connect(socket,static_cast<void (QTcpSocket::*)(QAbstractSocket::SocketError)>(&QTcpSocket::error),this,&TcpConnections::error);
     connect(socket, QOverload<QAbstractSocket::SocketError>::of(&QAbstractSocket::error),this, &TcpConnections::disconnected);
-    connect(connection, &TcpConnection::openFile,this,&TcpConnections::moveConnection);
+    connect(connection, &TcpConnection::openDocument,this,&TcpConnections::moveConnectionAndOpenDocument);
     connect(connection, &TcpConnection::userLogin,this,&TcpConnections::loginUserDB);
     connect(connection, &TcpConnection::userRegistration,this,&TcpConnections::registerUser);
     connect(connection, &TcpConnection::userUpdateImg,this,&TcpConnections::updateImgUserDB);
@@ -164,7 +166,8 @@ void TcpConnections::accept(qintptr handle, TcpConnection *connection)
     connect(socket,static_cast<void (QTcpSocket::*)(QAbstractSocket::SocketError)>(&QTcpSocket::error),this,&TcpConnections::error);
     connect(socket, QOverload<QAbstractSocket::SocketError>::of(&QAbstractSocket::error),this, &TcpConnections::disconnected);
     connection->moveToThread(QThread::currentThread());
-    connect(connection, &TcpConnection::openFile,this,&TcpConnections::moveConnection);
+    connect(connection, &TcpConnection::openDocument,this,&TcpConnections::moveConnectionAndOpenDocument);
+    connect(connection, &TcpConnection::newDocument,this,&TcpConnections::moveConnectionAndCreateDocument);
     connect(connection, &TcpConnection::userLogin,this,&TcpConnections::loginUserDB);
     connect(connection, &TcpConnection::userRegistration,this,&TcpConnections::registerUser);
     connect(connection, &TcpConnection::userUpdateImg,this,&TcpConnections::updateImgUserDB);
@@ -177,7 +180,7 @@ void TcpConnections::accept(qintptr handle, TcpConnection *connection)
     emit socket->connected();
 }
 
-void TcpConnections::moveConnection(quint32 fileId)
+void TcpConnections::moveConnectionAndOpenDocument(OpenMessage openMsg)
 {
 
     TcpConnection *tcpConnection = qobject_cast<TcpConnection *>(sender());
@@ -192,14 +195,144 @@ void TcpConnections::moveConnection(quint32 fileId)
     tcpConnection->moveToThread(serverThread);
     socket->moveToThread(serverThread);
     emit pushConnection(tcpConnection);
+
+    documentId = uriToDocumentId(openMsg.getUri());
+
     qDebug()<< "removable: " << removable;
     if(count()==0 && removable){
         // TODO save file and close it (?)
-        qDebug() <<"No more clients for this file: "<<fileId;
-        emit closeFile(fileId);
+        qDebug() <<"No more clients for this file: "<<documentId;
+        emit closeFile(documentId);
+        documentId = QUuid();
+        delete documentFile;
+        tcpConnection->setDocumentId(QUuid());
+    } else {
+        DocumentEntity docEntity(documentId);
+        DocumentMessage docMsg;
+        int ret;
+
+        if(db.open()) {
+            if (findDocument(db, docEntity)) {
+                tcpConnection->setDocumentId(documentId);
+                documentFile = new QFile(docEntity.getPath(), this);
+                if (documentFile->open(QIODevice::ReadOnly)) {
+                    QDataStream docFileStream(documentFile);
+                    QVector<Symbol> docSymbols;
+
+                    while(true) {
+                        Symbol tempSym;
+                        docFileStream.startTransaction();
+                        docFileStream >> tempSym;
+                        if (docFileStream.commitTransaction()) {
+                            docSymbols << tempSym;
+                        } else {
+                            break;
+                        }
+                    }
+
+                    documentFile->close();
+
+                    docMsg = DocumentMessage(docEntity.getDocumentId(),
+                                             docEntity.getOwnerEmail(),
+                                             docEntity.getName(),
+                                             docEntity.getDate(),
+                                             docSymbols);
+
+                    ret = 1;
+                } else {
+                    ret = 0;
+                }
+            } else {
+                ret = 0;
+            }
+
+            db.close();
+        } else {
+            ret = -1;
+        }
+
+        QMetaObject::invokeMethod(    tcpConnection,        // pointer to a QObject
+                                      "replyOpenDocument",       // member name (no parameters here)
+                                      Qt::QueuedConnection,     // connection type
+                                      Q_ARG(int, ret),
+                                      Q_ARG(DocumentMessage, docMsg));     // parametersC
     }
 
 }
+
+void TcpConnections::moveConnectionAndCreateDocument(DocumentMessage newDocMsg)
+{
+
+    TcpConnection *tcpConnection = qobject_cast<TcpConnection *>(sender());
+    QTcpSocket *socket = tcpConnection->getSocket();
+
+    socket->disconnect();
+    tcpConnection->disconnect();
+
+    removeConnection(tcpConnection);
+
+    // Notify tcpserver to move connection to the specific tcpconnections
+    tcpConnection->moveToThread(serverThread);
+    socket->moveToThread(serverThread);
+    emit pushConnection(tcpConnection);
+
+    documentId = QUuid::createUuid();
+
+    qDebug()<< "removable: " << removable;
+    if(count()==0 && removable){
+        // TODO save file and close it (?)
+        qDebug() <<"No more clients for this file: "<<documentId;
+        emit closeFile(documentId);
+        documentId = QUuid();
+        delete documentFile;
+        tcpConnection->setDocumentId(QUuid());
+    } else {
+        QString newDocPath = createDocumentPath(documentId);
+        DocumentEntity newDocEntity{documentId, newDocMsg.getOwnerEmail(), newDocMsg.getName(), newDocPath};
+        DocumentMessage docMsg;
+        int ret;
+
+        if(db.open()) {
+            if (!findDocument(db, newDocEntity)) {
+                tcpConnection->setDocumentId(documentId);
+                documentFile = new QFile(newDocPath, this);
+                if (documentFile->open(QIODevice::WriteOnly)) {
+                    QDataStream docFileStream(documentFile);
+
+                    foreach (Symbol sym, docMsg.getSymbols()) {
+                        docFileStream << sym;
+                    }
+
+                    documentFile->close();
+
+                    docMsg = DocumentMessage(documentId,
+                                             newDocEntity.getOwnerEmail(),
+                                             newDocEntity.getName(),
+                                             newDocEntity.getDate(),
+                                             QVector<Symbol>()); // reply with empty vector
+
+                    ret = 1;
+                } else {
+                    ret = 0;
+                }
+            } else {
+                ret = 0;
+            }
+
+            db.close();
+        } else {
+            ret = -1;
+        }
+
+        QMetaObject::invokeMethod(    tcpConnection,        // pointer to a QObject
+                                      "replyNewDocument",       // member name (no parameters here)
+                                      Qt::QueuedConnection,     // connection type
+                                      Q_ARG(int, ret),
+                                      Q_ARG(DocumentMessage, docMsg));     // parametersC
+    }
+
+}
+
 
 void TcpConnections::loginUserDB(User user)
 {
@@ -361,3 +494,7 @@ void TcpConnections::updatePswUserDB(User user, QString oldPassword, QString new
                                   Q_ARG(User, user));     // parametersC
 }
 
+QUuid TcpConnections::uriToDocumentId(QUrl uri)
+{
+    return QUuid(uri.authority());
+}
