@@ -30,6 +30,17 @@ TcpConnections::~TcpConnections()
     qDebug() << this << "destroyed";
     closeDb(db);
 
+    if (removable)
+      {
+        timer->stop();
+        emit commitFile(serverEditor->getSymbols());
+        worker->quit();
+        worker->wait();
+        delete timer;
+        delete serverFile;
+        delete documentFile;
+    }
+
 }
 
 int TcpConnections::count()
@@ -112,10 +123,22 @@ void TcpConnections::start()
     qDebug() << this << " connections started on " << QThread::currentThread();
     db = startDb();
     qDebug() << "db started "<<db;
-
-    documentFile = new QFile(documentIdToDocumentPath(documentId), this);
+    if(removable)
+    startUpFile();
 }
-
+void TcpConnections::startUpFile()
+{
+    worker = new QThread(this);
+    documentFile = new QFile(documentIdToDocumentPath(documentId));
+    serverFile = new DocumentFile(documentFile);
+    documentFile->moveToThread(worker);
+    serverFile->moveToThread(worker);
+    worker->start();
+    connect(this,&TcpConnections::commitFile, serverFile, &DocumentFile::saveChanges,Qt::QueuedConnection);
+    timer = new QTimer(this);
+    connect(timer, &QTimer::timeout, this, &TcpConnections::saveFile,Qt::QueuedConnection);
+    timer->start(1000*60);
+}
 void TcpConnections::quit()
 { 
     if(!sender()) return;
@@ -345,6 +368,8 @@ void TcpConnections::moveConnectionAndCreateDocument(DocumentMessage newDocMsg)
 }
 
 
+
+
 void TcpConnections::loginUserDB(User user)
 {
     TcpConnection *tcpConnection = qobject_cast<TcpConnection *>(sender());
@@ -507,16 +532,58 @@ void TcpConnections::updatePswUserDB(User user, QString oldPassword, QString new
 
 void TcpConnections::editDocument(EditingMessage editMsg)
 {
+    TcpConnection *tcpConnection = qobject_cast<TcpConnection *>(sender());
+    QTcpSocket *socket = tcpConnection->getSocket();
     serverEditor->process(editMsg);
+    multicastUpdateSymbol(socket,editMsg);
     //TODO: multicast to other clients
 }
 
 void TcpConnections::changeCursorPosition(CursorPositionMessage curPosMsg)
 {
     //TODO: multicast to other clients
+    TcpConnection *tcpConnection = qobject_cast<TcpConnection *>(sender());
+    QTcpSocket *socket = tcpConnection->getSocket();
+    multicastUpdateCursor(socket,curPosMsg);
+}
+
+void TcpConnections::saveFile()
+{
+    emit commitFile(serverEditor->getSymbols());
 }
 
 QUuid TcpConnections::uriToDocumentId(QUrl uri)
 {
     return QUuid(uri.authority());
 }
+
+void TcpConnections::multicastUpdateSymbol(QTcpSocket *senderSocket, EditingMessage editMsg)
+{
+    foreach(QTcpSocket *socket, m_connections.keys())
+
+    {
+        if(senderSocket != socket){
+            QMetaObject::invokeMethod(    m_connections.value(socket),        // pointer to a QObject
+                                          "sendSymbol",       // member name (no parameters here)
+                                          Qt::QueuedConnection,     // connection type
+                                          Q_ARG(EditingMessage, editMsg)
+                                          );     // parametersC
+        }
+    }
+}
+
+void TcpConnections::multicastUpdateCursor(QTcpSocket *senderSocket, CursorPositionMessage curPosMsg)
+{
+    foreach(QTcpSocket *socket, m_connections.keys())
+
+    {
+        if(senderSocket != socket){
+            QMetaObject::invokeMethod(    m_connections.value(socket),        // pointer to a QObject
+                                          "sendCursor",       // member name (no parameters here)
+                                          Qt::QueuedConnection,     // connection type
+                                          Q_ARG(CursorPositionMessage, curPosMsg)
+                                          );     // parametersC
+        }
+    }
+}
+

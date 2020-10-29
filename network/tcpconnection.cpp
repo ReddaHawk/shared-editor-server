@@ -542,3 +542,20 @@ void TcpConnection::replyNewDocument(int ret, DocumentMessage docMessage)
     }
 }
 
+void TcpConnection::sendSymbol(EditingMessage editMsg)
+{
+    Header headerResponse(MessageType::B_EDIT);
+    QDataStream replyStream(m_socket);
+    replyStream.setVersion(QDataStream::Qt_5_12);
+    replyStream << headerResponse << editMsg;
+}
+
+void TcpConnection::sendCursor(CursorPositionMessage curPosMsg)
+{
+    Header headerResponse(MessageType::B_CURSOR_POS);
+    QDataStream replyStream(m_socket);
+    replyStream.setVersion(QDataStream::Qt_5_12);
+    replyStream.setVersion(QDataStream::Qt_5_12);
+    replyStream << headerResponse << curPosMsg;
+}
+
