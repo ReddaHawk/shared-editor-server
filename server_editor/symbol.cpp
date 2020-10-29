@@ -1,7 +1,3 @@
-//
-// Created by leonardo on 07/05/19.
-//
-
 #include "symbol.h"
 
 int Symbol::getFractIndexDigit(int pos) const {
@@ -18,8 +14,12 @@ QVector<int> Symbol::getFractIndex() const {
     return fractIndex;
 }
 
-int Symbol::getSiteId() {
+QUuid Symbol::getSiteId() {
     return siteId;
+}
+
+QString Symbol::getOwnerEmail() {
+    return ownerEmail;
 }
 
 size_t Symbol::fractIndexSize() {
@@ -39,11 +39,11 @@ QTextBlockFormat Symbol::getBlockFormat() {
 }
 
 QDataStream &Symbol::serialize(QDataStream &stream) const {
-    stream << value << charFormat << blockFormat << siteId << counter << fractIndex;
+    stream << value << charFormat << blockFormat << siteId << ownerEmail << counter << fractIndex;
     return stream;
 }
 
 QDataStream &Symbol::unserialize(QDataStream &stream) {
-    stream >> value >> charFormat >> blockFormat >> siteId >> counter >> fractIndex;
+    stream >> value >> charFormat >> blockFormat >> siteId >> ownerEmail >> counter >> fractIndex;
     return stream;
 }

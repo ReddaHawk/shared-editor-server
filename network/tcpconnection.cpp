@@ -53,7 +53,7 @@ void TcpConnection::setDocumentId(QUuid documentId){
     this->documentId = documentId;
 }
 
-quint32 TcpConnection::getSiteId(){
+QUuid TcpConnection::getSiteId(){
     return siteId;
 }
 // Read data from socket
@@ -230,12 +230,12 @@ void TcpConnection::readyRead()
             break;
         }
 
-        if(siteId != openMsg.getSiteId()) {
+        /*if(siteId != openMsg.getSiteId()) {
             qDebug() << "Wrong siteId";
             headerResponse.setType(MessageType::S_OPEN_KO);
             replyStream << headerResponse;
             break;
-        }
+        }*/
         qDebug() << "Received document open request";
         emit openDocument(openMsg);
 
@@ -294,6 +294,25 @@ void TcpConnection::readyRead()
 
         qDebug() << "Received cursor position change request";
         emit changeCursorPosition(curPosMsg);
+
+        break;
+    }
+
+    case MessageType::C_DOCLS: {
+        if(!userLogged){
+            headerResponse.setType(MessageType::S_NOT_LOGGED);
+            replyStream << headerResponse;
+            break;
+        }
+
+        QString ownerEmail;
+        socketStream >> ownerEmail;
+
+        if (!socketStream.commitTransaction())
+            return;
+
+        qDebug() << "Received document list request";
+        emit sendDocumentList(ownerEmail);
 
         break;
     }
@@ -531,6 +550,35 @@ void TcpConnection::replyNewDocument(int ret, DocumentMessage docMessage)
     {
         qDebug() << "NEW KO";
         headerResponse.setType(MessageType::S_NEW_KO);
+        replyStream << headerResponse;
+
+    }
+    if(ret == -1)
+    {
+        // Error db
+        headerResponse.setType(MessageType::S_ERROR_DB);
+        replyStream << headerResponse;
+    }
+}
+
+void TcpConnection::replyDocumentList(int ret, QVector<DocumentMessage> docMessages)
+{
+    Header headerResponse;
+    QDataStream replyStream(m_socket);
+    replyStream.setVersion(QDataStream::Qt_5_12);
+    if(ret == 1)
+    {
+        qDebug() << "DOCLS OK";
+        headerResponse.setType(MessageType::S_DOCLS_OK);
+        replyStream << headerResponse << docMessages.size();
+        foreach(DocumentMessage d, docMessages) {
+            replyStream << d;
+        }
+    }
+    if(ret == 0)
+    {
+        qDebug() << "DOCLS KO";
+        headerResponse.setType(MessageType::S_DOCLS_KO);
         replyStream << headerResponse;
 
     }

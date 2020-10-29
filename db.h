@@ -24,7 +24,9 @@ bool updatePasswordUser (QSqlDatabase db, User &user , QString &newPass);
 
 bool addDocument(QSqlDatabase db, DocumentEntity &document);
 
-bool findDocument(QSqlDatabase db, DocumentEntity &document);
+bool findDocumentById(QSqlDatabase db, DocumentEntity &document);
+
+int findDocumentByOwner(QSqlDatabase db, QVector<DocumentEntity> &documents, QString ownerEmail);
 
 
 QSqlError populateUsersTable();

@@ -38,6 +38,9 @@ enum class MessageType : qint32 {
     S_NEW_KO = -13,
     B_EDIT = 14,
     B_CURSOR_POS = 15,
+    C_DOCLS = 16,
+    S_DOCLS_OK = 17,
+    S_DOCLS_KO = -17,
     C_TEST = 1000
 
 };

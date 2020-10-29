@@ -10,7 +10,7 @@
 #include "symbol.h"
 
 class DocumentMessage : public Serialization
-{
+{    
 private:
     QUuid documentId;
     QString ownerEmail;
@@ -34,5 +34,7 @@ public:
 
     void setName(QString newName);
 };
+
+Q_DECLARE_METATYPE(DocumentMessage);
 
 #endif // DOCUMENTDTO_H

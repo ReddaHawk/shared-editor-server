@@ -5,7 +5,7 @@ OpenMessage::OpenMessage()
 
 }
 
-OpenMessage::OpenMessage(quint32 siteId, QUrl &uri) :
+OpenMessage::OpenMessage(QUuid siteId, QUrl uri) :
     siteId(siteId),
     uri(uri)
 {
@@ -23,7 +23,7 @@ QDataStream &OpenMessage::unserialize(QDataStream &stream) {
     return stream;
 }
 
-quint32 OpenMessage::getSiteId() const {
+QUuid OpenMessage::getSiteId() const {
     return siteId;
 }
 

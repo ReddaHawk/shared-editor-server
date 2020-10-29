@@ -10,6 +10,8 @@
 #include "tcpconnection.h"
 #include "servereditor.h"
 
+Q_DECLARE_METATYPE(QVector<DocumentMessage>)
+
 class TcpConnections : public QObject
 {
     Q_OBJECT
@@ -57,6 +59,7 @@ public slots:
     void updatePswUserDB(User user, QString oldPsw, QString newPsw);
     void editDocument(EditingMessage editMsg);
     void changeCursorPosition(CursorPositionMessage curPosMsg);
+    void sendDocumentList(QString ownerEmail);
 
     // Server receives the connection and push a signal to this slot. This slot accept a handle 
     // and not the socket because it is executed in other thread

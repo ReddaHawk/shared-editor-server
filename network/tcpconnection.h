@@ -30,13 +30,13 @@ public:
 
     QUuid getDocumentId();
     void setDocumentId(QUuid documentId);
-    quint32 getSiteId();
+    QUuid getSiteId();
 
 private:
     User m_user;
     bool userLogged;
     QTcpSocket *m_socket;
-    quint32 siteId;
+    QUuid siteId;
     QUuid documentId;
 
 signals:
@@ -50,6 +50,7 @@ signals:
     void userUpdateSrn(User user, QString surname);
     void userUpdatePsw(User user, QString oldPassword, QString newPassword);
     void changeCursorPosition(CursorPositionMessage curPosMsg);
+    void sendDocumentList(QString ownerEmail);
 
 public slots:
     void connected();
@@ -69,6 +70,7 @@ public slots:
     void replyUpdatePassword(int ret, User userMessage);
     void replyOpenDocument(int ret, DocumentMessage docMessage);
     void replyNewDocument(int ret, DocumentMessage docMessage);
+    void replyDocumentList(int ret, QVector<DocumentMessage> docMessages);
 
 };
 

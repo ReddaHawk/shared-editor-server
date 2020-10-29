@@ -1,23 +1,23 @@
 #include "servereditor.h"
 
 ServerEditor::ServerEditor() {
-    this->_siteId = -1;
+    this->_siteId = QUuid::createUuid();
     Symbol newSym = generateSymbol(QChar::ParagraphSeparator, QTextCharFormat(), QTextBlockFormat(), 0);
     auto it = _symbols.begin();
     _symbols.insert(it, newSym);
 }
 
 ServerEditor::ServerEditor(QVector<Symbol> &symbols) :
-    _siteId(-1),
+    _siteId(QUuid::createUuid()),
     _symbols(symbols)
 {
 }
 
-int ServerEditor::getSiteId() {
+QUuid ServerEditor::getSiteId() {
     return _siteId;
 }
 
-int ServerEditor::getSymbolSiteId(int index) {
+QUuid ServerEditor::getSymbolSiteId(int index) {
     auto it = _symbols.begin();
     it+=index;
     return it->getSiteId();
@@ -41,7 +41,7 @@ Symbol ServerEditor::generateSymbol(QChar value, QTextCharFormat charFormat, QTe
             for (int i = 0; i < size - 1; ++i) {
                 startFractIndex.push_back(0);
             }
-            Symbol sym1('$', QTextCharFormat(), QTextBlockFormat(), this->_siteId, 0, startFractIndex);
+            Symbol sym1('$', QTextCharFormat(), QTextBlockFormat(), this->_siteId, "_server", 0, startFractIndex);
             generateIndexBetween(sym1, 0, sym2, 0, newFractIndex);
         }
     } else if (_symbols.size() == index) {
@@ -53,7 +53,7 @@ Symbol ServerEditor::generateSymbol(QChar value, QTextCharFormat charFormat, QTe
         generateIndexBetween(sym1, 0, sym2, 0, newFractIndex);
     }
 
-    return Symbol(value, charFormat, blockFormat, this->_siteId, this->_counter++, newFractIndex);
+    return Symbol(value, charFormat, blockFormat, this->_siteId, "_server", this->_counter++, newFractIndex);
 }
 
 void ServerEditor::generateIndexBetween(Symbol &sym1, int pos1, Symbol &sym2, int pos2, QVector<int> &newFractIndex) {
