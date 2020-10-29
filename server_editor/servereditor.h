@@ -24,7 +24,7 @@ public:
     void remoteDelete(Symbol sym);
     QString to_string();
     int symbolCount();
-
+    QVector<Symbol> getSymbols();
 signals:
     void remoteCharInserted(int remoteSiteId, QChar value, QTextCharFormat charFormat, QTextBlockFormat blockFormat, int index);
     void remoteCharDeleted(int remoteSiteId, int index);

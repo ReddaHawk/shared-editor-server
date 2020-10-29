@@ -50,7 +50,6 @@ signals:
     void userUpdateSrn(User user, QString surname);
     void userUpdatePsw(User user, QString oldPassword, QString newPassword);
     void changeCursorPosition(CursorPositionMessage curPosMsg);
-
 public slots:
     void connected();
     void disconnected();
@@ -69,6 +68,8 @@ public slots:
     void replyUpdatePassword(int ret, User userMessage);
     void replyOpenDocument(int ret, DocumentMessage docMessage);
     void replyNewDocument(int ret, DocumentMessage docMessage);
+    void sendSymbol(EditingMessage editMsg);
+    void sendCursor(CursorPositionMessage curPosMsg);
 
 };
 
