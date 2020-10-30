@@ -9,6 +9,7 @@
 #include <QReadWriteLock>
 #include "tcpconnection.h"
 #include "servereditor.h"
+#include "documentfile.h"
 
 Q_DECLARE_METATYPE(QVector<DocumentMessage>)
 
@@ -29,24 +30,31 @@ QMap<QTcpSocket*, TcpConnection*> m_connections;
 QSqlDatabase db;
 void removeSocket(QTcpSocket *socket);
 void removeConnection(TcpConnection *tcpConnection);
+void startUpFile();
 bool removable = false;
-
 QFile *documentFile;
 QUuid documentId;
 QUuid uriToDocumentId(QUrl uri);
-
+QThread *worker;
 ServerEditor *serverEditor;
+DocumentFile *serverFile;
+QTimer *timer;
+
+void multicastUpdateSymbol(QTcpSocket *socket, EditingMessage editMsg );
+void multicastUpdateCursor(QTcpSocket *socket, CursorPositionMessage curPosMsg );
 
 signals:
     void quitting();
     void finished();
     void pushConnection(TcpConnection *tcpConnection);
     void closeFile(QUuid documentId);
+    void commitFile(QVector<Symbol> symbols);
 protected slots:
     void disconnected();
     void error(QAbstractSocket::SocketError socketError);
     void moveConnectionAndOpenDocument(OpenMessage openMsg);
     void moveConnectionAndCreateDocument(DocumentMessage newDocMsg);
+    void saveFile();
 public slots:
     void start();
     void quit();

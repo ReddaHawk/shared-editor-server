@@ -71,6 +71,8 @@ public slots:
     void replyOpenDocument(int ret, DocumentMessage docMessage);
     void replyNewDocument(int ret, DocumentMessage docMessage);
     void replyDocumentList(int ret, QVector<DocumentMessage> docMessages);
+    void sendSymbol(EditingMessage editMsg);
+    void sendCursor(CursorPositionMessage curPosMsg);
 
 };
 

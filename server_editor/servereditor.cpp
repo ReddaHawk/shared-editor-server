@@ -141,3 +141,8 @@ void ServerEditor::process(const EditingMessage &m) {
 int ServerEditor::symbolCount() {
     return _symbols.size();
 }
+
+QVector<Symbol> ServerEditor::getSymbols()
+{
+   return _symbols;
+}
