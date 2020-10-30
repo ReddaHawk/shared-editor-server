@@ -19,6 +19,7 @@ private:
     QString getCurrentDate();
 
 public:
+    DocumentEntity() = default;
     DocumentEntity(QUuid documentId);
     DocumentEntity(QUuid documentId, QString ownerEmail, QString name, QString path);
     DocumentEntity(QUuid documentId, QString ownerEmail, QString name, QString path, QString date);

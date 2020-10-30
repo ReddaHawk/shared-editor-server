@@ -12,6 +12,7 @@
 #include "documentfile.h"
 
 Q_DECLARE_METATYPE(QVector<DocumentMessage>)
+Q_DECLARE_METATYPE(QVector<Symbol>)
 
 class TcpConnections : public QObject
 {
@@ -26,19 +27,18 @@ public:
     int count();
 
 private:
-QMap<QTcpSocket*, TcpConnection*> m_connections;
-QSqlDatabase db;
-void removeSocket(QTcpSocket *socket);
-void removeConnection(TcpConnection *tcpConnection);
-void startUpFile();
-bool removable = false;
-QFile *documentFile;
-QUuid documentId;
-QUuid uriToDocumentId(QUrl uri);
-QThread *worker;
-ServerEditor *serverEditor;
-DocumentFile *serverFile;
-QTimer *timer;
+    QMap<QTcpSocket*, TcpConnection*> m_connections;
+    QSqlDatabase db;
+    void removeSocket(QTcpSocket *socket);
+    void removeConnection(TcpConnection *tcpConnection);
+    void startUpFile();
+    bool removable = false;
+    QFile *documentFile;
+    QUuid documentId;
+    QThread *worker;
+    ServerEditor *serverEditor;
+    DocumentFile *serverFile;
+    QTimer *timer;
 
 void multicastUpdateSymbol(QTcpSocket *socket, EditingMessage editMsg );
 void multicastUpdateCursor(QTcpSocket *socket, CursorPositionMessage curPosMsg );

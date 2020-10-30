@@ -16,7 +16,6 @@ class ServerEditor : public QObject
 
 public:
     ServerEditor();
-    explicit ServerEditor(QVector<Symbol> &symbols);
     QUuid getSiteId();
     QUuid getSymbolSiteId(int index);
     QTextCharFormat getSymbolFormat(int index);
@@ -26,6 +25,7 @@ public:
     QString to_string();
     int symbolCount();
     QVector<Symbol> getSymbols();
+    void setSymbols(QVector<Symbol>& symbols);
 signals:
     void remoteCharInserted(QUuid remoteSiteId, QChar value, QTextCharFormat charFormat, QTextBlockFormat blockFormat, int index);
     void remoteCharDeleted(QUuid remoteSiteId, int index);

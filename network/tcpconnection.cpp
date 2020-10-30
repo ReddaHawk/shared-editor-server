@@ -10,7 +10,7 @@ TcpConnection::~TcpConnection()
 {
     qDebug() << this << "Destroyed";
     if(m_socket!=nullptr)
-    m_socket->close();  
+    m_socket->close();
 }
 
 void TcpConnection::setSocket(QTcpSocket *socket)
@@ -45,12 +45,12 @@ void TcpConnection::disconnected()
     qDebug() << this << " disconnected "<< sender();
 }
 
-QUuid TcpConnection::getDocumentId(){
-    return documentId;
+DocumentEntity TcpConnection::getDocumentEntity(){
+    return docEntity;
 }
 
-void TcpConnection::setDocumentId(QUuid documentId){
-    this->documentId = documentId;
+void TcpConnection::setDocumentEntity(DocumentEntity& docEntity){
+    this->docEntity = docEntity;
 }
 
 QUuid TcpConnection::getSiteId(){
@@ -63,7 +63,7 @@ void TcpConnection::readyRead()
     QDataStream socketStream(m_socket);
 
     socketStream.setVersion(QDataStream::Qt_5_12);
-    
+
     // Start to read the message
     socketStream.startTransaction();
 
@@ -77,7 +77,7 @@ void TcpConnection::readyRead()
     //qDebug()<< "Ricevuto pacchetto nel thread: " << QThread::currentThread();
     switch(header.getType())
     {
-    case MessageType::C_TEST: {
+    /*case MessageType::C_TEST: {
 
         socketStream >> documentId;
         if (!socketStream.commitTransaction())
@@ -88,7 +88,7 @@ void TcpConnection::readyRead()
         replyStream << headerResponse ;
         emit openDocument(OpenMessage());
         break;
-    }
+    }*/
     case MessageType::C_LOGIN:
     {
         User userMessage;

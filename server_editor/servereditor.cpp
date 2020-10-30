@@ -1,16 +1,10 @@
 #include "servereditor.h"
 
 ServerEditor::ServerEditor() {
-    this->_siteId = QUuid::createUuid();
+    this->_siteId = QUuid();
     Symbol newSym = generateSymbol(QChar::ParagraphSeparator, QTextCharFormat(), QTextBlockFormat(), 0);
     auto it = _symbols.begin();
     _symbols.insert(it, newSym);
-}
-
-ServerEditor::ServerEditor(QVector<Symbol> &symbols) :
-    _siteId(QUuid::createUuid()),
-    _symbols(symbols)
-{
 }
 
 QUuid ServerEditor::getSiteId() {
@@ -145,4 +139,9 @@ int ServerEditor::symbolCount() {
 QVector<Symbol> ServerEditor::getSymbols()
 {
    return _symbols;
+}
+
+void ServerEditor::setSymbols(QVector<Symbol> &symbols)
+{
+    _symbols = symbols;
 }

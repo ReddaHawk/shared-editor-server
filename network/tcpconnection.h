@@ -28,8 +28,8 @@ public:
 
     QTcpSocket* getSocket();
 
-    QUuid getDocumentId();
-    void setDocumentId(QUuid documentId);
+    DocumentEntity getDocumentEntity();
+    void setDocumentEntity(DocumentEntity& docEntity);
     QUuid getSiteId();
 
 private:
@@ -37,7 +37,7 @@ private:
     bool userLogged;
     QTcpSocket *m_socket;
     QUuid siteId;
-    QUuid documentId;
+    DocumentEntity docEntity;
 
 signals:
     void openDocument(OpenMessage openMsg);

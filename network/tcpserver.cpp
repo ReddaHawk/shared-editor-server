@@ -87,11 +87,11 @@ void TcpServer::complete()
 
 
 void TcpServer::moveConnection(TcpConnection *tcpConnection){
-    QUuid file = tcpConnection->getDocumentId();
+    QUuid file = tcpConnection->getDocumentEntity().getDocumentId();
     QTcpSocket *socket = tcpConnection->getSocket();
     TcpConnection *connection = tcpConnection;
     if(connectionsByDocumentId.contains(file)){
-        qDebug()<<"File already opened: "<<tcpConnection->getDocumentId();
+        qDebug()<<"File already opened: "<<tcpConnection->getDocumentEntity().getDocumentId();
         QThread *connectionThread = threadsByDocumentId.value(file);
         TcpConnections *tcpConnections = connectionsByDocumentId.value(file);
         connection->moveToThread(connectionThread);
@@ -104,9 +104,9 @@ void TcpServer::moveConnection(TcpConnection *tcpConnection){
 
     } else
     {
-        qDebug()<<"Create thread and new structure for a new file "<<tcpConnection->getDocumentId();
+        qDebug()<<"Create thread and new structure for a new file "<<tcpConnection->getDocumentEntity().getDocumentId();
         QThread *newThread = new QThread(this);
-        TcpConnections *tcpConnections = new TcpConnections(QThread::currentThread(),connection->getDocumentId());
+        TcpConnections *tcpConnections = new TcpConnections(QThread::currentThread(),connection->getDocumentEntity().getDocumentId());
         connectionsByDocumentId.insert(file,tcpConnections);
         threadsByDocumentId.insert(file,newThread);
         connect(this,&TcpServer::finished,tcpConnections,&TcpConnections::quit, Qt::QueuedConnection);
