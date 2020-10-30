@@ -53,7 +53,7 @@ const auto UPDATE_USER_PASSWORD_SQL = QLatin1String(R"(
 const auto DOCUMENTS_SQL = QLatin1String(R"(
                                             create table documents_table
                                             (
-                                                document_id char(36) not null,
+                                                document_id varchar(50) not null,
                                                 owner_email varchar(50) not null,
                                                 name varchar(150) not null,
                                                 path varchar(260) not null,
@@ -72,6 +72,12 @@ const auto FIND_DOCUMENT_BY_ID_SQL = QLatin1String(R"(
                                                  FROM documents_table
                                                  WHERE document_id=?
     )");
+
+const auto FIND_DOCUMENT_BY_EMAIL_SQL = QLatin1String(R"(
+                                                      SELECT document_id, owner_email, name, path, date
+                                                      FROM documents_table
+                                                      WHERE owner_email=?
+                                                      )");
 
 QString hostname;
 QString dbname;
@@ -323,7 +329,7 @@ bool addDocument(QSqlDatabase db, DocumentEntity &document) {
     return true;
 }
 
-int findDocumentExec(QSqlQuery &q, DocumentEntity &document) {
+int findDocumentByIdExec(QSqlQuery &q, DocumentEntity &document) {
     if (!q.prepare(FIND_DOCUMENT_BY_ID_SQL))
         return -1;
     q.addBindValue(document.getDocumentId());
@@ -331,9 +337,9 @@ int findDocumentExec(QSqlQuery &q, DocumentEntity &document) {
     return q.size();
 }
 
-bool findDocument(QSqlDatabase db, DocumentEntity &document) {
+bool findDocumentById(QSqlDatabase db, DocumentEntity &document) {
     QSqlQuery q(db);
-    int ret = findDocumentExec(q, document);
+    int ret = findDocumentByIdExec(q, document);
     if (ret == -1 || ret == 0) return false;
     q.first();
     document = DocumentEntity(q.value(0).toString(),
@@ -342,6 +348,34 @@ bool findDocument(QSqlDatabase db, DocumentEntity &document) {
                               q.value(3).toString(),
                               q.value(4).toString());
     return true;
+}
+
+int findDocumentByOwnerExec(QSqlQuery &q, QString ownerEmail) {
+    if (!q.prepare(FIND_DOCUMENT_BY_EMAIL_SQL))
+        return -1;
+    q.addBindValue(ownerEmail);
+    q.exec();
+    return q.size();
+}
+
+int findDocumentByOwner(QSqlDatabase db, QVector<DocumentEntity> &documents, QString ownerEmail) {
+    QSqlQuery q(db);
+    int ret = findDocumentByOwnerExec(q, ownerEmail);
+    if (ret == -1 || ret == 0) return ret;
+    q.first();
+    documents.clear();
+    qDebug() << "Find documents for" << ownerEmail;
+    do {
+        DocumentEntity document(q.value(0).toString(),
+                                q.value(1).toString(),
+                                q.value(2).toString(),
+                                q.value(3).toString(),
+                                q.value(4).toString());
+        documents.append(document);
+        qDebug() << "Found document" << document.getDocumentId();
+    } while (q.next());
+
+    return documents.size();
 }
 
 void setDocumentsDirectory(QString dir) {

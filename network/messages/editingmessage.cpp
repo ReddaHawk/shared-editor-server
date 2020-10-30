@@ -4,7 +4,7 @@
 
 #include "editingmessage.h"
 
-int EditingMessage::getSenderSiteId() {
+QUuid EditingMessage::getSenderSiteId() {
     return senderSiteId;
 }
 

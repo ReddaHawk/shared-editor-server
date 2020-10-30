@@ -5,6 +5,7 @@
 #include <QChar>
 #include <QString>
 #include <QVector>
+#include <QUuid>
 
 #include "editingmessage.h"
 #include "symbol.h"
@@ -16,8 +17,8 @@ class ServerEditor : public QObject
 public:
     ServerEditor();
     explicit ServerEditor(QVector<Symbol> &symbols);
-    int getSiteId();
-    int getSymbolSiteId(int index);
+    QUuid getSiteId();
+    QUuid getSymbolSiteId(int index);
     QTextCharFormat getSymbolFormat(int index);
     void process(const EditingMessage& m);
     void remoteInsert(Symbol sym);
@@ -26,11 +27,11 @@ public:
     int symbolCount();
     QVector<Symbol> getSymbols();
 signals:
-    void remoteCharInserted(int remoteSiteId, QChar value, QTextCharFormat charFormat, QTextBlockFormat blockFormat, int index);
-    void remoteCharDeleted(int remoteSiteId, int index);
+    void remoteCharInserted(QUuid remoteSiteId, QChar value, QTextCharFormat charFormat, QTextBlockFormat blockFormat, int index);
+    void remoteCharDeleted(QUuid remoteSiteId, int index);
 
 private:
-    int _siteId{};
+    QUuid _siteId;
     QVector<Symbol> _symbols;
     int _counter=1;
 

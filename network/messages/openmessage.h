@@ -2,23 +2,24 @@
 #define OPENMESSAGE_H
 
 #include <QUrl>
+#include <QUuid>
 #include <serialization.h>
 
 class OpenMessage : public Serialization
 {
 private:
-    quint32 siteId;
+    QUuid siteId;
     QUrl uri;
 
 
 public:
     OpenMessage();
-    OpenMessage(quint32 siteId, QUrl &uri);
+    OpenMessage(QUuid siteId, QUrl uri);
 
     QDataStream &serialize(QDataStream &stream) const override;
     QDataStream &unserialize(QDataStream &stream) override;
 
-    quint32 getSiteId() const;
+    QUuid getSiteId() const;
     QUrl getUri() const;
 };
 
