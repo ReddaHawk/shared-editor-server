@@ -269,7 +269,7 @@ void TcpConnections::moveConnectionAndOpenDocument(OpenMessage openMsg)
                     removeConnection(tcpConnection);
 
                     if (count()==0 && removable) {
-                        qDebug() <<"No more clients for this file: "<<documentId;
+                        qDebug() <<"No more clients for this file: "<< tcpConnection->getDocumentEntity().getDocumentId();
                         emit closeFile(documentId);
                     }
 
@@ -311,8 +311,10 @@ void TcpConnections::moveConnectionAndCreateDocument(DocumentMessage newDocMsg)
     TcpConnection *tcpConnection = qobject_cast<TcpConnection *>(sender());
     QTcpSocket *socket = tcpConnection->getSocket();
 
-    QString newDocPath = documentIdToDocumentPath(documentId);
-    DocumentEntity newDocEntity{QUuid::createUuid(), newDocMsg.getOwnerEmail(), newDocMsg.getName(), newDocPath};
+    QUuid newDocId = QUuid::createUuid();
+
+    QString newDocPath = documentIdToDocumentPath(newDocId);
+    DocumentEntity newDocEntity{newDocId, newDocMsg.getOwnerEmail(), newDocMsg.getName(), newDocPath};
     DocumentMessage docMsg;
     int ret;
 
@@ -324,7 +326,7 @@ void TcpConnections::moveConnectionAndCreateDocument(DocumentMessage newDocMsg)
 
                 QDataStream docFileStream(&creatingFile);
 
-                docFileStream << ServerEditor().getSymbols().begin();
+                docFileStream << ServerEditor().getSymbols().at(0);
 
                 creatingFile.close();
 
@@ -336,7 +338,7 @@ void TcpConnections::moveConnectionAndCreateDocument(DocumentMessage newDocMsg)
                 removeConnection(tcpConnection);
 
                 if (count()==0 && removable) {
-                    qDebug() <<"No more clients for this file: "<<documentId;
+                    qDebug() <<"No more clients for this file: "<<newDocId;
                     emit closeFile(documentId);
                 }
 
