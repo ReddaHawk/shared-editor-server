@@ -366,7 +366,9 @@ void TcpConnections::moveConnectionAndCreateDocument(DocumentMessage newDocMsg)
 
                 QDataStream docFileStream(&creatingFile);
 
-                docFileStream << ServerEditor().getSymbols().at(0);
+                foreach(Symbol symbol, newDocMsg.getSymbols()){
+                    docFileStream << symbol;
+                }
 
                 creatingFile.close();
 

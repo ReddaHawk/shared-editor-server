@@ -33,7 +33,7 @@ signals:
 private:
     QUuid _siteId;
     QVector<Symbol> _symbols;
-    int _counter=1;
+    int _counter=0;
 
     Symbol generateSymbol(QChar value, QTextCharFormat charFormat, QTextBlockFormat blockFormat, int index);
     void generateIndexBetween(Symbol &sym1, int pos1, Symbol &sym2, int pos2, QVector<int> &newFractIndex);
