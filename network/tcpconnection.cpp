@@ -529,7 +529,7 @@ void TcpConnection::replyOpenDocument(int ret, DocumentMessage docMessage)
     replyStream.setVersion(QDataStream::Qt_5_12);
     if(ret == 1)
     {
-        qDebug() << "OPEN OK";
+        qDebug() << "OPEN OK"<<" "<<docMessage.getSymbols().length();
         headerResponse.setType(MessageType::S_OPEN_OK);
         replyStream << headerResponse << docMessage;
     }

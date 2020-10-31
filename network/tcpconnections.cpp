@@ -33,7 +33,6 @@ TcpConnections::~TcpConnections()
     if (removable)
       {
         //timer->stop();
-        emit commitFile(serverEditor->getSymbols());
         delete serverEditor;
         worker->quit();
         worker->wait();
@@ -76,6 +75,8 @@ void TcpConnections::removeSocket(QTcpSocket *socket)
     socket->deleteLater();
     if(count()==0 && removable){
         timer->stop();
+        emit commitFile(serverEditor->getSymbols());
+
         qDebug()<<"Timer stop";
         emit closeFile(documentId);
         documentId = QUuid();
@@ -145,9 +146,11 @@ void TcpConnections::startUpFile()
     worker = new QThread(this);
     documentFile = new QFile(documentIdToDocumentPath(documentId));
     serverFile = new DocumentFile(documentFile);
+    QVector<Symbol> docSymbols;
+    if(!documentFile->open(QIODevice::ReadOnly))
+        return;
 
     QDataStream docFileStream(documentFile);
-    QVector<Symbol> docSymbols;
 
     while(true) {
         Symbol tempSym;
@@ -164,14 +167,14 @@ void TcpConnections::startUpFile()
     documentFile->close();
 
     serverEditor->setSymbols(docSymbols);
-
+    serverEditor->getSymbols().length();
     documentFile->moveToThread(worker);
     serverFile->moveToThread(worker);
     worker->start();
     qRegisterMetaType<QVector<Symbol>>();
     connect(this,&TcpConnections::commitFile, serverFile, &DocumentFile::saveChanges,Qt::QueuedConnection);
     timer = new QTimer();
-    connect(timer, &QTimer::timeout, this, &TcpConnections::saveFile,Qt::QueuedConnection);
+    //connect(timer, &QTimer::timeout, this, &TcpConnections::saveFile,Qt::QueuedConnection);
     timer->start(1000*10); //TODO: *60
 }
 void TcpConnections::quit()
@@ -198,6 +201,7 @@ void TcpConnections::acceptConnection(QTcpSocket *socket, TcpConnection *connect
     connect(socket,static_cast<void (QTcpSocket::*)(QAbstractSocket::SocketError)>(&QTcpSocket::error),this,&TcpConnections::error);
     connect(socket, QOverload<QAbstractSocket::SocketError>::of(&QAbstractSocket::error),this, &TcpConnections::disconnected);
     connect(connection, &TcpConnection::openDocument,this,&TcpConnections::moveConnectionAndOpenDocument);
+    connect(connection, &TcpConnection::newDocument,this,&TcpConnections::moveConnectionAndCreateDocument);
     connect(connection, &TcpConnection::userLogin,this,&TcpConnections::loginUserDB);
     connect(connection, &TcpConnection::userRegistration,this,&TcpConnections::registerUser);
     connect(connection, &TcpConnection::userUpdateImg,this,&TcpConnections::updateImgUserDB);
@@ -206,6 +210,7 @@ void TcpConnections::acceptConnection(QTcpSocket *socket, TcpConnection *connect
     connect(connection, &TcpConnection::userUpdatePsw,this,&TcpConnections::updatePswUserDB);
     connect(connection, &TcpConnection::editDocument,this,&TcpConnections::editDocument);
     connect(connection, &TcpConnection::changeCursorPosition,this,&TcpConnections::changeCursorPosition);
+    connect(connection, &TcpConnection::sendDocumentList,this,&TcpConnections::sendDocumentList);
 
     connection->setSocket(socket);
 
@@ -222,6 +227,7 @@ void TcpConnections::acceptConnection(QTcpSocket *socket, TcpConnection *connect
                                   Qt::QueuedConnection,     // connection type
                                   Q_ARG(int, 1),
                                   Q_ARG(DocumentMessage, docMsg));     // parametersC
+    qDebug() << "------> Ho il vettore symbols dopo: " << serverEditor->getSymbols().length();
 
     // notify new client
 
@@ -276,6 +282,7 @@ void TcpConnections::accept(qintptr handle, TcpConnection *connection)
 void TcpConnections::moveConnectionAndOpenDocument(OpenMessage openMsg)
 {
 
+
     TcpConnection *tcpConnection = qobject_cast<TcpConnection *>(sender());
     QTcpSocket *socket = tcpConnection->getSocket();        
 
@@ -283,7 +290,7 @@ void TcpConnections::moveConnectionAndOpenDocument(OpenMessage openMsg)
     DocumentEntity docEntity(openingDocId);
     DocumentMessage docMsg;
     int ret;
-
+    qDebug()<<"@@@@@@@@@@@@@@@@@@ Movandopen";
     if(db.open()) {
         if (findDocumentById(db, docEntity)) {
             QFile openingFile(docEntity.getPath(), this);
@@ -298,6 +305,7 @@ void TcpConnections::moveConnectionAndOpenDocument(OpenMessage openMsg)
 
                     if (count()==0 && removable) {
                         timer->stop();
+                        emit commitFile(serverEditor->getSymbols());
 
                         qDebug() <<"No more clients for this file: "<< tcpConnection->getDocumentEntity().getDocumentId();
                         emit closeFile(documentId);
@@ -337,6 +345,7 @@ void TcpConnections::moveConnectionAndOpenDocument(OpenMessage openMsg)
 
 void TcpConnections::moveConnectionAndCreateDocument(DocumentMessage newDocMsg)
 {
+    qDebug()<<"@@@@@@@@@@@@@@@@@@ Movandcreate";
 
     qDebug()<< this << "moveconnection" << QThread::currentThread();
     TcpConnection *tcpConnection = qobject_cast<TcpConnection *>(sender());
@@ -371,6 +380,7 @@ void TcpConnections::moveConnectionAndCreateDocument(DocumentMessage newDocMsg)
                 if (count()==0 && removable) {
                     qDebug() <<"No more clients for this file: "<<newDocId;
                     timer->stop();
+                    emit commitFile(serverEditor->getSymbols());
 
                     emit closeFile(documentId);
                 }
@@ -583,7 +593,7 @@ void TcpConnections::changeCursorPosition(CursorPositionMessage curPosMsg)
 void TcpConnections::saveFile()
 {
     if (serverEditor != nullptr) {
-        //qDebug() << this << QThread::currentThread() << "Saving timer";
+        //qDebug() << this << QThread::currentThread() << "Saving timer" << serverEditor->getSymbols().length();
         QVector<Symbol> symbols = serverEditor->getSymbols();
         emit commitFile(symbols);
     }
