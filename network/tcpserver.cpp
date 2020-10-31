@@ -87,6 +87,8 @@ void TcpServer::complete()
 
 
 void TcpServer::moveConnection(TcpConnection *tcpConnection){
+    qDebug()<< this << "server Thread" << QThread::currentThread();
+
     QUuid file = tcpConnection->getDocumentEntity().getDocumentId();
     QTcpSocket *socket = tcpConnection->getSocket();
     TcpConnection *connection = tcpConnection;
@@ -100,7 +102,7 @@ void TcpServer::moveConnection(TcpConnection *tcpConnection){
                                       "acceptConnection",       // member name (no parameters here)
                                       Qt::QueuedConnection,     // connection type
                                       Q_ARG(QTcpSocket*, socket),
-                                      Q_ARG(TcpConnection*, connection));     // parametersC
+                                      Q_ARG(TcpConnection*, tcpConnection));     // parametersC
 
     } else
     {
@@ -118,11 +120,16 @@ void TcpServer::moveConnection(TcpConnection *tcpConnection){
         connection->moveToThread(newThread);
         socket->moveToThread(newThread);
         //tcpConnections->acceptConnection(tcpConnection->getSocket(),connection);
+        while(!tcpConnections->isReady())
+        {
+            qDebug()<<"Non pronto";
+            QThread::currentThread()->msleep(100);
+        }
         QMetaObject::invokeMethod(    tcpConnections,        // pointer to a QObject
                                       "acceptConnection",       // member name (no parameters here)
                                       Qt::QueuedConnection,     // connection type
                                       Q_ARG(QTcpSocket*, socket),
-                                      Q_ARG(TcpConnection*, connection));     // parametersC
+                                      Q_ARG(TcpConnection*, tcpConnection));     // parametersC
     }
     for(auto key : connectionsByDocumentId.keys())
     {

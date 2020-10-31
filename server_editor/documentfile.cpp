@@ -12,7 +12,7 @@ DocumentFile::~DocumentFile()
 
 void DocumentFile::saveChanges(QVector<Symbol> symbols)
 {
-    qDebug() << this << QThread::currentThread() << "Saving changes to" << file->fileName();
+    //qDebug() << this << QThread::currentThread() << "Saving changes to" << file->fileName();
     if(!file->open(QIODevice::WriteOnly))
         return;
 

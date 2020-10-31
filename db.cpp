@@ -168,7 +168,7 @@ bool loginUser (QSqlDatabase db, User &user)
     int ret = checkCredentials(q,user);
     if (ret == -1 || ret == 0) return false;
     q.first();
-    user = User(q.value(0).toString(),q.value(1).toString(),q.value(2).toString(),q.value(3).toString(),q.value(4).toByteArray());
+    user = User(q.value(0).toString(),q.value(1).toString(),q.value(2).toString(),q.value(3).toString(),q.value(4).toByteArray(),q.value(5).toByteArray());
     return true;
 }
 

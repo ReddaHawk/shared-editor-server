@@ -10,7 +10,7 @@
 #include "tcpconnection.h"
 #include "servereditor.h"
 #include "documentfile.h"
-
+typedef QMap<QUuid,User> CustomMap;
 Q_DECLARE_METATYPE(QVector<DocumentMessage>)
 Q_DECLARE_METATYPE(QVector<Symbol>)
 
@@ -25,9 +25,11 @@ public:
 
     ~TcpConnections();
     int count();
+    bool isReady();
 
 private:
     QMap<QTcpSocket*, TcpConnection*> m_connections;
+    QMap<QUuid, User> onlineUsers;
     QSqlDatabase db;
     void removeSocket(QTcpSocket *socket);
     void removeConnection(TcpConnection *tcpConnection);
@@ -39,7 +41,7 @@ private:
     ServerEditor *serverEditor;
     DocumentFile *serverFile;
     QTimer *timer;
-
+    bool ready = false;
 void multicastUpdateSymbol(QTcpSocket *socket, EditingMessage editMsg );
 void multicastUpdateCursor(QTcpSocket *socket, CursorPositionMessage curPosMsg );
 
@@ -49,6 +51,9 @@ signals:
     void pushConnection(TcpConnection *tcpConnection);
     void closeFile(QUuid documentId);
     void commitFile(QVector<Symbol> symbols);
+    void onlineUsrsUpdRmv(QUuid uid);
+    void onlineUsrsUpdInc(QMap<QUuid,User> map);
+
 protected slots:
     void disconnected();
     void error(QAbstractSocket::SocketError socketError);

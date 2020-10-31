@@ -67,6 +67,8 @@ void TcpConnections::removeSocket(QTcpSocket *socket)
         socket->close();
     }
     //_connections.value(socket)->setSocket(nullptr);
+    onlineUsers.remove(m_connections.value(socket)->getSiteId());
+    emit onlineUsrsUpdRmv(m_connections.value(socket)->getSiteId());
     delete m_connections.value(socket);
     qDebug() << this << " deleting socket " << socket;
     m_connections.remove(socket);
@@ -76,6 +78,8 @@ void TcpConnections::removeSocket(QTcpSocket *socket)
         emit closeFile(documentId);
         documentId = QUuid();
     }
+
+
     qDebug() << this << " client count = " << m_connections.count();
 
 }
@@ -88,6 +92,7 @@ void TcpConnections::removeConnection(TcpConnection *tcpConnection)
 
     qDebug() << this << " moving connection = " <<  socket;
     m_connections.remove(socket);
+    onlineUsers.remove(tcpConnection->getSiteId());
     // deleteLater() is better because if socket is deleted while used the program will crash
    // socket->deleteLater();
 
@@ -121,9 +126,15 @@ void TcpConnections::start()
 {
     qDebug() << this << " connections started on " << QThread::currentThread();
     db = startDb();
-    qDebug() << "db started "<<db;
+
     if (removable)
         startUpFile();
+    ready = true;
+}
+
+bool TcpConnections::isReady()
+{
+    return ready;
 }
 
 void TcpConnections::startUpFile()
@@ -203,7 +214,7 @@ void TcpConnections::acceptConnection(QTcpSocket *socket, TcpConnection *connect
                            connection->getDocumentEntity().getName(),
                            connection->getDocumentEntity().getDate(),
                            serverEditor->getSymbols());
-
+    qDebug() << "------> Ho il vettore symbols lungo: " << serverEditor->getSymbols().length();
     QMetaObject::invokeMethod(    connection,        // pointer to a QObject
                                   "replyOpenDocument",       // member name (no parameters here)
                                   Qt::QueuedConnection,     // connection type
@@ -212,6 +223,17 @@ void TcpConnections::acceptConnection(QTcpSocket *socket, TcpConnection *connect
 
     // notify new client
 
+    // TODO COMPLETE
+    // PER ora mando tutta la mappa di quelli online alla nuova persona
+    // ATTENZIONE la funzione sendOnlineUsrs è da implementare
+    // COMMENTARE PER FAR PARTIRE IL SERVER
+    onlineUsers.insert(connection->getSiteId(),connection->getUser());
+    emit onlineUsrsUpdInc(onlineUsers);
+    QMetaObject::invokeMethod(    connection,        // pointer to a QObject
+                                  "sendOnlineUsrs",       // member name (no parameters here)
+                                  Qt::QueuedConnection,     // connection type
+                                  Q_ARG(CustomMap, onlineUsers));     // parametersC
+    //emit onlineUsrsUpdInc()
     qDebug() << this << " clients = " << count();
 }
 
@@ -308,6 +330,7 @@ void TcpConnections::moveConnectionAndOpenDocument(OpenMessage openMsg)
 void TcpConnections::moveConnectionAndCreateDocument(DocumentMessage newDocMsg)
 {
 
+    qDebug()<< this << "moveconnection" << QThread::currentThread();
     TcpConnection *tcpConnection = qobject_cast<TcpConnection *>(sender());
     QTcpSocket *socket = tcpConnection->getSocket();
 
@@ -536,6 +559,7 @@ void TcpConnections::editDocument(EditingMessage editMsg)
     TcpConnection *tcpConnection = qobject_cast<TcpConnection *>(sender());
     QTcpSocket *socket = tcpConnection->getSocket();
     serverEditor->process(editMsg);
+    qDebug() << "edited the file in RAM";
     multicastUpdateSymbol(socket,editMsg);
 }
 
@@ -549,7 +573,7 @@ void TcpConnections::changeCursorPosition(CursorPositionMessage curPosMsg)
 void TcpConnections::saveFile()
 {
     if (serverEditor != nullptr) {
-        qDebug() << this << QThread::currentThread() << "Saving timer";
+        //qDebug() << this << QThread::currentThread() << "Saving timer";
         QVector<Symbol> symbols = serverEditor->getSymbols();
         emit commitFile(symbols);
     }
@@ -588,6 +612,7 @@ void TcpConnections::sendDocumentList(QString ownerEmail)
 
 void TcpConnections::multicastUpdateSymbol(QTcpSocket *senderSocket, EditingMessage editMsg)
 {
+    qDebug() << "multicast init";
     foreach(QTcpSocket *socket, m_connections.keys())
 
     {
@@ -599,6 +624,9 @@ void TcpConnections::multicastUpdateSymbol(QTcpSocket *senderSocket, EditingMess
                                           );     // parametersC
         }
     }
+    qDebug() << "multicast finish";
+
+
 }
 
 void TcpConnections::multicastUpdateCursor(QTcpSocket *senderSocket, CursorPositionMessage curPosMsg)

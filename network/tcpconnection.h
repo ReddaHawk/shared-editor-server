@@ -31,7 +31,7 @@ public:
     DocumentEntity getDocumentEntity();
     void setDocumentEntity(DocumentEntity& docEntity);
     QUuid getSiteId();
-
+    User getUser();
 private:
     User m_user;
     bool userLogged;

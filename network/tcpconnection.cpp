@@ -10,7 +10,7 @@ TcpConnection::~TcpConnection()
 {
     qDebug() << this << "Destroyed";
     if(m_socket!=nullptr)
-    m_socket->close();
+        m_socket->close();
 }
 
 void TcpConnection::setSocket(QTcpSocket *socket)
@@ -56,24 +56,30 @@ void TcpConnection::setDocumentEntity(DocumentEntity& docEntity){
 QUuid TcpConnection::getSiteId(){
     return siteId;
 }
+
+User TcpConnection::getUser()
+{
+    return m_user;
+}
 // Read data from socket
 void TcpConnection::readyRead()
 {
     if(!sender()) return;
     QDataStream socketStream(m_socket);
-
+    Header header;
+    QDataStream replyStream(m_socket);
+    replyStream.setVersion(QDataStream::Qt_5_12);
+    Header headerResponse;
     socketStream.setVersion(QDataStream::Qt_5_12);
+retry:
 
     // Start to read the message
     socketStream.startTransaction();
 
-    Header header;
 
     socketStream >> header; // try to read packet atomically
 
-    QDataStream replyStream(m_socket);
-    replyStream.setVersion(QDataStream::Qt_5_12);
-    Header headerResponse;
+
     //qDebug()<< "Ricevuto pacchetto nel thread: " << QThread::currentThread();
     switch(header.getType())
     {
@@ -275,8 +281,8 @@ void TcpConnection::readyRead()
 
         qDebug() << "Received edit request";
         emit editDocument(editMsg);
-
         break;
+
     }
 
     case MessageType::B_CURSOR_POS: {
@@ -294,8 +300,8 @@ void TcpConnection::readyRead()
 
         qDebug() << "Received cursor position change request";
         emit changeCursorPosition(curPosMsg);
-
         break;
+
     }
 
     case MessageType::C_DOCLS: {
@@ -317,12 +323,19 @@ void TcpConnection::readyRead()
         break;
     }
 
-    default:
+    default:{
         qDebug() << "Unknown MessageType: wait for more data";
         if (!socketStream.commitTransaction())
             return;
-
     }
+    }
+
+    qDebug() << "available bytes to read: "<<m_socket->bytesAvailable();
+    if(m_socket->bytesAvailable()>0)
+        goto retry;
+
+
+
 }
 
 // Write data in socket
