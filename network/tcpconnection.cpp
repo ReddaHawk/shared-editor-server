@@ -620,3 +620,22 @@ void TcpConnection::sendCursor(CursorPositionMessage curPosMsg)
     replyStream << headerResponse << curPosMsg;
 }
 
+void TcpConnection::sendOnlineUsrs(CustomMap onlineUsers)
+{
+    Header headerResponse(MessageType::S_ONL_USRS);
+    QDataStream replyStream(m_socket);
+    replyStream.setVersion(QDataStream::Qt_5_12);
+    replyStream.setVersion(QDataStream::Qt_5_12);
+    qDebug("Mando utenti online");
+    replyStream << headerResponse << onlineUsers;
+}
+
+void TcpConnection::removeOnlineUser(QUuid uid)
+{
+    Header headerResponse(MessageType::S_RMV_USR);
+    QDataStream replyStream(m_socket);
+    replyStream.setVersion(QDataStream::Qt_5_12);
+    replyStream.setVersion(QDataStream::Qt_5_12);
+    qDebug("Mando utenti online");
+    replyStream << headerResponse << uid;
+}

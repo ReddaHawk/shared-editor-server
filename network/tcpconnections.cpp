@@ -15,6 +15,8 @@ TcpConnections::TcpConnections(QThread *serverThread, QUuid documentId) : server
     qDebug() << this << "created on thread " << QThread::currentThread();
 }
 
+
+
 TcpConnections::~TcpConnections()
 {
     if(count()!=0)
@@ -66,8 +68,12 @@ void TcpConnections::removeSocket(QTcpSocket *socket)
         socket->close();
     }
     //_connections.value(socket)->setSocket(nullptr);
-    onlineUsers.remove(m_connections.value(socket)->getSiteId());
-    emit onlineUsrsUpdRmv(m_connections.value(socket)->getSiteId());
+    if(removable){
+        onlineUsers.remove(m_connections.value(socket)->getSiteId());
+        if(onlineUsers.values().length()>0)
+        multicastRemoveUser(m_connections.value(socket)->getSiteId());
+    }
+
     delete m_connections.value(socket);
     qDebug() << this << " deleting socket " << socket;
     m_connections.remove(socket);
@@ -95,7 +101,11 @@ void TcpConnections::removeConnection(TcpConnection *tcpConnection)
 
     qDebug() << this << " moving connection = " <<  socket;
     m_connections.remove(socket);
-    onlineUsers.remove(tcpConnection->getSiteId());
+    if(removable){
+        onlineUsers.remove(tcpConnection->getSiteId());
+        multicastRemoveUser(tcpConnection->getSiteId());
+    }
+
     // deleteLater() is better because if socket is deleted while used the program will crash
    // socket->deleteLater();
 
@@ -221,22 +231,42 @@ void TcpConnections::acceptConnection(QTcpSocket *socket, TcpConnection *connect
                            connection->getDocumentEntity().getName(),
                            connection->getDocumentEntity().getDate(),
                            serverEditor->getSymbols());
-    qDebug() << "------> Ho il vettore symbols lungo: " << serverEditor->getSymbols().length();
+    /*
     QMetaObject::invokeMethod(    connection,        // pointer to a QObject
                                   "replyOpenDocument",       // member name (no parameters here)
                                   Qt::QueuedConnection,     // connection type
                                   Q_ARG(int, 1),
                                   Q_ARG(DocumentMessage, docMsg));     // parametersC
-    qDebug() << "------> Ho il vettore symbols dopo: " << serverEditor->getSymbols().length();
+                                  */
+    connection->replyOpenDocument(1,docMsg);
+    qDebug() << "------> Ho il vettore symbols " << serverEditor->getSymbols().length() << " e persone online: "<<onlineUsers.values().length();
 
-    // notify new client
+    //notify new client
 
     // TODO COMPLETE
     // PER ora mando tutta la mappa di quelli online alla nuova persona
     // ATTENZIONE la funzione sendOnlineUsrs è da implementare
     // COMMENTARE PER FAR PARTIRE IL SERVER
 
+    if(onlineUsers.keys().length()>0)
+          connection->sendOnlineUsrs(onlineUsers);
+        /*
+
+    QMetaObject::invokeMethod(    connection,        // pointer to a QObject
+                                  "sendOnlineUsrs",       // member name (no parameters here)
+                                  Qt::QueuedConnection,     // connection type
+                                  Q_ARG(CustomMap, onlineUsers));     // parametersC
+*/
+    // Send list of current online users to new client
+
+    qDebug()<<" ######## prima"<< connection->getSiteId()<<onlineUsers.keys().length()<<" "<<onlineUsers.size();
     onlineUsers.insert(connection->getSiteId(),connection->getUser());
+    qDebug()<<" ######## dopo"<<onlineUsers.keys().length()<<" "<<onlineUsers.size();
+
+    QMap<QUuid,User> newUser;
+    newUser[connection->getSiteId()]=connection->getUser();
+
+     multicastNotifyNewUser(connection->getSocket(),newUser);
     /*
     emit onlineUsrsUpdInc(onlineUsers);
 
@@ -666,3 +696,24 @@ void TcpConnections::multicastUpdateCursor(QTcpSocket *senderSocket, CursorPosit
     }
 }
 
+void TcpConnections::multicastNotifyNewUser(QTcpSocket *senderSocket, QMap<QUuid, User> newUser)
+{
+    foreach(QTcpSocket *socket, m_connections.keys())
+
+    {
+        if(senderSocket != socket){
+            m_connections.value(socket)->sendOnlineUsrs(newUser);
+
+        }
+    }
+}
+
+void TcpConnections::multicastRemoveUser(QUuid uuid)
+{
+    qDebug()<<"Remove user disconnected";
+    foreach(QTcpSocket *socket, m_connections.keys())
+
+    {
+        m_connections.value(socket)->removeOnlineUser(uuid);
+    }
+}
