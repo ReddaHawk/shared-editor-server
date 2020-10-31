@@ -28,5 +28,6 @@ public:
     QDataStream &unserialize(QDataStream &stream) override;
 };
 
+Q_DECLARE_METATYPE(EditingMessage)
 
 #endif //EDITINGMESSAGE_H

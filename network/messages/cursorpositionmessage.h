@@ -17,5 +17,6 @@ private:
     int pos;
     QUuid siteId;
 };
+Q_DECLARE_METATYPE(CursorPositionMessage)
 
 #endif // CURSORPOSITIONMESSAGE_H

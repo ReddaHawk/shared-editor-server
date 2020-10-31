@@ -372,7 +372,7 @@ void TcpConnection::replyLogin(int ret, User userMessage)
         qDebug()<< "User "<<userMessage.getEmail()<<" has logged correctly";
         headerResponse.setType(MessageType::S_LOGIN_OK);
         userLogged = true;
-        m_user = User(userMessage.getUsername(),userMessage.getName(),userMessage.getSurname(),userMessage.getEmail());
+        m_user = User(userMessage.getUsername(),userMessage.getName(),userMessage.getSurname(),userMessage.getEmail(),userMessage.getImage());
         replyStream << headerResponse << userMessage;
     }
     if(ret==0)
@@ -399,7 +399,7 @@ void TcpConnection::replyRegister(int ret, User userMessage)
         qDebug() << "REG OK";
         headerResponse.setType(MessageType::S_REGISTER_OK);
         userLogged=true;
-        m_user = User(userMessage.getUsername(),userMessage.getName(),userMessage.getSurname(),userMessage.getEmail());
+        m_user = User(userMessage.getUsername(),userMessage.getName(),userMessage.getSurname(),userMessage.getEmail(),userMessage.getImage());
         replyStream << headerResponse;
     }
     if(ret == 0)

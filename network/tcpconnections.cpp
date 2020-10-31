@@ -32,7 +32,7 @@ TcpConnections::~TcpConnections()
 
     if (removable)
       {
-        timer->stop();
+        //timer->stop();
         emit commitFile(serverEditor->getSymbols());
         delete serverEditor;
         worker->quit();
@@ -75,6 +75,8 @@ void TcpConnections::removeSocket(QTcpSocket *socket)
     // deleteLater() is better because if socket is deleted while used the program will crash
     socket->deleteLater();
     if(count()==0 && removable){
+        timer->stop();
+        qDebug()<<"Timer stop";
         emit closeFile(documentId);
         documentId = QUuid();
     }
@@ -168,12 +170,12 @@ void TcpConnections::startUpFile()
     worker->start();
     qRegisterMetaType<QVector<Symbol>>();
     connect(this,&TcpConnections::commitFile, serverFile, &DocumentFile::saveChanges,Qt::QueuedConnection);
-    timer = new QTimer(this);
+    timer = new QTimer();
     connect(timer, &QTimer::timeout, this, &TcpConnections::saveFile,Qt::QueuedConnection);
     timer->start(1000*10); //TODO: *60
 }
 void TcpConnections::quit()
-{ 
+{
     if(!sender()) return;
     qDebug() << this << " connections quitting " << count()<< m_connections.count();
     foreach(QTcpSocket *socket, m_connections.keys())
@@ -227,13 +229,17 @@ void TcpConnections::acceptConnection(QTcpSocket *socket, TcpConnection *connect
     // PER ora mando tutta la mappa di quelli online alla nuova persona
     // ATTENZIONE la funzione sendOnlineUsrs è da implementare
     // COMMENTARE PER FAR PARTIRE IL SERVER
+
     onlineUsers.insert(connection->getSiteId(),connection->getUser());
+    /*
     emit onlineUsrsUpdInc(onlineUsers);
+
     QMetaObject::invokeMethod(    connection,        // pointer to a QObject
                                   "sendOnlineUsrs",       // member name (no parameters here)
                                   Qt::QueuedConnection,     // connection type
                                   Q_ARG(CustomMap, onlineUsers));     // parametersC
     //emit onlineUsrsUpdInc()
+    */
     qDebug() << this << " clients = " << count();
 }
 
@@ -291,6 +297,8 @@ void TcpConnections::moveConnectionAndOpenDocument(OpenMessage openMsg)
                     removeConnection(tcpConnection);
 
                     if (count()==0 && removable) {
+                        timer->stop();
+
                         qDebug() <<"No more clients for this file: "<< tcpConnection->getDocumentEntity().getDocumentId();
                         emit closeFile(documentId);
                     }
@@ -362,6 +370,8 @@ void TcpConnections::moveConnectionAndCreateDocument(DocumentMessage newDocMsg)
 
                 if (count()==0 && removable) {
                     qDebug() <<"No more clients for this file: "<<newDocId;
+                    timer->stop();
+
                     emit closeFile(documentId);
                 }
 
@@ -581,6 +591,7 @@ void TcpConnections::saveFile()
 
 void TcpConnections::sendDocumentList(QString ownerEmail)
 {
+    qDebug()<<"Sono nella docList";
     TcpConnection *tcpConnection = qobject_cast<TcpConnection *>(sender());
     int ret;
     QVector<DocumentMessage> docMsgs;
@@ -603,6 +614,7 @@ void TcpConnections::sendDocumentList(QString ownerEmail)
         // Error db
         ret=-1;
     }
+    qDebug()<<"Sono nel sendDocList "<<ret;
     QMetaObject::invokeMethod(    tcpConnection,        // pointer to a QObject
                                   "replyDocumentList",       // member name (no parameters here)
                                   Qt::QueuedConnection,     // connection type
