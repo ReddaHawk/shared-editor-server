@@ -15,6 +15,7 @@
 #include "DocumentDTO.h"
 #include "db.h"
 #include "messages/messageType.h"
+typedef QMap<QUuid,User> CustomMap;
 
 class TcpConnection : public QObject
 {
@@ -32,6 +33,8 @@ public:
     void setDocumentEntity(DocumentEntity& docEntity);
     QUuid getSiteId();
     User getUser();
+    void sendOnlineUsrs(CustomMap onlineUsers);
+    void removeOnlineUser(QUuid uid);
 private:
     User m_user;
     bool userLogged;

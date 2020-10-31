@@ -22,11 +22,11 @@ public:
     explicit TcpConnections(QObject *parent = nullptr);
     explicit TcpConnections(QThread *serverThread);
     explicit TcpConnections(QThread *serverThread, QUuid documentId);
-
+    void multicastNotifyNewUser(QTcpSocket *socket,QMap<QUuid, User> newUser);
     ~TcpConnections();
     int count();
     bool isReady();
-
+    void multicastRemoveUser(QUuid);
 private:
     QMap<QTcpSocket*, TcpConnection*> m_connections;
     QMap<QUuid, User> onlineUsers;
@@ -51,8 +51,7 @@ signals:
     void pushConnection(TcpConnection *tcpConnection);
     void closeFile(QUuid documentId);
     void commitFile(QVector<Symbol> symbols);
-    void onlineUsrsUpdRmv(QUuid uid);
-    void onlineUsrsUpdInc(QMap<QUuid,User> map);
+
 
 protected slots:
     void disconnected();
