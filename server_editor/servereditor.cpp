@@ -2,9 +2,6 @@
 
 ServerEditor::ServerEditor() {
     this->_siteId = QUuid();
-    Symbol newSym = generateSymbol(QChar::ParagraphSeparator, QTextCharFormat(), QTextBlockFormat(), 0);
-    auto it = _symbols.begin();
-    _symbols.insert(it, newSym);
 }
 
 QUuid ServerEditor::getSiteId() {
@@ -144,4 +141,5 @@ QVector<Symbol> ServerEditor::getSymbols()
 void ServerEditor::setSymbols(QVector<Symbol> &symbols)
 {
     _symbols = symbols;
+    _counter = symbols.size();
 }
