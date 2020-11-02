@@ -98,16 +98,18 @@ retry:
     case MessageType::C_LOGIN:
     {
         User userMessage;
-        socketStream >> userMessage;
+        QUuid newSiteId;
+        socketStream >> userMessage >> newSiteId;
         if (!socketStream.commitTransaction())
             return;
-        qDebug() << "Login test: "<< userMessage.toString();
+        qDebug() << "Login: "<< userMessage.toString() << "with siteId:" << newSiteId.toString();
         if(userMessage.getEmail().isEmpty() || userMessage.getPassword().isEmpty()){
             headerResponse.setType(MessageType::S_INPUT_KO);
             replyStream << headerResponse;
 
         }
         else {
+            this->siteId = newSiteId;
             userMessage = User(userMessage.getEmail(),userMessage.getPassword());
             emit userLogin(userMessage);
         }
