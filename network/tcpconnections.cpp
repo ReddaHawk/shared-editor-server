@@ -221,6 +221,7 @@ void TcpConnections::acceptConnection(QTcpSocket *socket, TcpConnection *connect
     connect(connection, &TcpConnection::editDocument,this,&TcpConnections::editDocument);
     connect(connection, &TcpConnection::changeCursorPosition,this,&TcpConnections::changeCursorPosition);
     connect(connection, &TcpConnection::sendDocumentList,this,&TcpConnections::sendDocumentList);
+    connect(connection, &TcpConnection::deleteFile,this,&TcpConnections::deleteFileDB);
 
     connection->setSocket(socket);
 
@@ -303,6 +304,8 @@ void TcpConnections::accept(qintptr handle, TcpConnection *connection)
     connect(connection, &TcpConnection::userUpdateSrn,this,&TcpConnections::updateSrnUserDB);
     connect(connection, &TcpConnection::userUpdatePsw,this,&TcpConnections::updatePswUserDB);
     connect(connection, &TcpConnection::sendDocumentList,this,&TcpConnections::sendDocumentList);
+    connect(connection, &TcpConnection::deleteFile,this,&TcpConnections::deleteFileDB);
+
     connection->setSocket(socket);
     m_connections.insert(socket, connection);
     qDebug() << this << " clients = " << m_connections.count();
@@ -718,4 +721,32 @@ void TcpConnections::multicastRemoveUser(QUuid uuid)
     {
         m_connections.value(socket)->removeOnlineUser(uuid);
     }
+}
+
+void TcpConnections::deleteFileDB(DocumentMessage doc)
+{
+    qDebug()<<"Received delete file";
+    TcpConnection *tcpConnection = qobject_cast<TcpConnection *>(sender());
+    int ret;
+    if(db.open()){
+        if (deleteFile(db,doc)) {
+             //qDebug()<< "User "<<userMessage.getEmail()<<" has logged correctly";
+            QFile *file = new QFile(documentIdToDocumentPath(documentId));
+            file->remove();
+             ret = 1;
+        } else
+        {
+           ret=0;
+        }
+        db.close();
+    }
+    else
+    {
+        ret=-1;
+    }
+    QMetaObject::invokeMethod(    tcpConnection,        // pointer to a QObject
+                                  "replyDeleteFile",       // member name (no parameters here)
+                                  Qt::QueuedConnection,     // connection type
+                                  Q_ARG(int, ret)
+                                  );
 }

@@ -54,7 +54,7 @@ signals:
     void userUpdatePsw(User user, QString oldPassword, QString newPassword);
     void changeCursorPosition(CursorPositionMessage curPosMsg);
     void sendDocumentList(QString ownerEmail);
-
+    void deleteFile(DocumentMessage doc);
 public slots:
     void connected();
     void disconnected();
@@ -76,7 +76,7 @@ public slots:
     void replyDocumentList(int ret, QVector<DocumentMessage> docMessages);
     void sendSymbol(EditingMessage editMsg);
     void sendCursor(CursorPositionMessage curPosMsg);
-
+    void replyDeleteFile(int ret);
 };
 
 #endif // TCPCONNECTION_H

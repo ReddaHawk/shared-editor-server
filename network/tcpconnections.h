@@ -72,7 +72,7 @@ public slots:
     void editDocument(EditingMessage editMsg);
     void changeCursorPosition(CursorPositionMessage curPosMsg);
     void sendDocumentList(QString ownerEmail);
-
+    void deleteFileDB(DocumentMessage doc);
     // Server receives the connection and push a signal to this slot. This slot accept a handle 
     // and not the socket because it is executed in other thread
     void accept(qintptr handle, TcpConnection *connection);

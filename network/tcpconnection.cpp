@@ -324,7 +324,25 @@ retry:
 
         break;
     }
+    case MessageType::C_DOC_DLT:
+    {
+        DocumentMessage docMessage;
+        socketStream >> docMessage;
+        if (!socketStream.commitTransaction())
+            return;
+        qDebug() << "Delete: "<< docMessage.getDocumentId();
+        if(docMessage.getOwnerEmail()!=m_user.getEmail()){
+            headerResponse.setType(MessageType::S_INPUT_KO);
+            replyStream << headerResponse;
 
+        }
+        else {
+            emit deleteFile(docMessage);
+        }
+
+
+        break;
+    }
     default:{
         qDebug() << "Unknown MessageType: wait for more data";
         if (!socketStream.commitTransaction())
@@ -620,6 +638,33 @@ void TcpConnection::sendCursor(CursorPositionMessage curPosMsg)
     replyStream.setVersion(QDataStream::Qt_5_12);
     replyStream.setVersion(QDataStream::Qt_5_12);
     replyStream << headerResponse << curPosMsg;
+}
+
+void TcpConnection::replyDeleteFile(int ret)
+{
+    Header headerResponse;
+    QDataStream replyStream(m_socket);
+    replyStream.setVersion(QDataStream::Qt_5_12);
+    if(ret == 1)
+    {
+        qDebug() << "remove file OK";
+        headerResponse.setType(MessageType::S_DOC_DLT_OK);
+        replyStream << headerResponse;
+
+    }
+    if(ret == 0)
+    {
+        qDebug() << "remove file KO";
+        headerResponse.setType(MessageType::S_DOC_DLT_KO);
+        replyStream << headerResponse;
+
+    }
+    if(ret == -1)
+    {
+        // Error db
+        headerResponse.setType(MessageType::S_ERROR_DB);
+        replyStream << headerResponse;
+    }
 }
 
 void TcpConnection::sendOnlineUsrs(CustomMap onlineUsers)

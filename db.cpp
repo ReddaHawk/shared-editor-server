@@ -67,6 +67,11 @@ const auto INSERT_DOCUMENT_SQL = QLatin1String(R"(
                       values(?, ?, ?, ?, ?)
     )");
 
+const auto DELETE_DOCUMENT_SQL = QLatin1String(R"(
+            DELETE FROM documents_table WHERE document_id=?;
+
+    )");
+
 const auto FIND_DOCUMENT_BY_ID_SQL = QLatin1String(R"(
                                                  SELECT document_id, owner_email, name, path, date
                                                  FROM documents_table
@@ -170,6 +175,19 @@ bool loginUser (QSqlDatabase db, User &user)
     q.first();
     user = User(q.value(0).toString(),q.value(1).toString(),q.value(2).toString(),q.value(3).toString(),q.value(4).toByteArray());
     return true;
+}
+
+bool deleteFile (QSqlDatabase db, DocumentMessage docm)
+{
+    QSqlQuery q(db);
+
+    if (!q.prepare(DELETE_DOCUMENT_SQL))
+        return false;
+    q.addBindValue(docm.getDocumentId());
+    if(q.exec())
+        return true;
+
+    return false;
 }
 
 bool updateImgUser (QSqlDatabase db, User &user , QByteArray &newImg){
@@ -384,4 +402,9 @@ void setDocumentsDirectory(QString dir) {
 
 QString documentIdToDocumentPath(QUuid documentId) {
     return documentsDirectory.filePath(documentId.toString());
+}
+
+bool deleteFile(QSqlDatabase db, User &user)
+{
+
 }
