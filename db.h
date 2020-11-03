@@ -4,7 +4,7 @@
 #include <iostream>
 #include "user.h"
 #include "DocumentEntity.h"
-
+#include "documentmessage.h"
 
 void addUser(QSqlQuery &q, User &user);
 
@@ -28,6 +28,7 @@ bool findDocumentById(QSqlDatabase db, DocumentEntity &document);
 
 int findDocumentByOwner(QSqlDatabase db, QVector<DocumentEntity> &documents, QString ownerEmail);
 
+bool deleteFile(QSqlDatabase db,DocumentMessage dm);
 
 QSqlError populateUsersTable();
 

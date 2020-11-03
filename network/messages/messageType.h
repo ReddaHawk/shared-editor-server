@@ -43,6 +43,9 @@ enum class MessageType : qint32 {
     S_ONL_USRS = 18,
     S_RMV_USR = 19,
     S_DOCLS_KO = -17,
+    C_DOC_DLT=20,
+    S_DOC_DLT_OK=21,
+    S_DOC_DLT_KO=-21,
     C_TEST = 1000
 
 };
