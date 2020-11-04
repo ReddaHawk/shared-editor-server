@@ -2,12 +2,10 @@
 
 UserMessage::UserMessage(QString& name, QString& surname) : name(name), prova(surname)
 {
-
 }
 
 UserMessage::UserMessage()
 {
-
 }
 
 QDataStream &UserMessage::serialize(QDataStream &stream) const {

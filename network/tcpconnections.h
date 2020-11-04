@@ -10,6 +10,7 @@
 #include "tcpconnection.h"
 #include "servereditor.h"
 #include "documentfile.h"
+
 typedef QMap<QUuid,User> CustomMap;
 Q_DECLARE_METATYPE(QVector<DocumentMessage>)
 Q_DECLARE_METATYPE(QVector<Symbol>)
@@ -18,6 +19,7 @@ class TcpConnections : public QObject
 {
     Q_OBJECT
     QThread *serverThread;
+
 public:
     explicit TcpConnections(QObject *parent = nullptr);
     explicit TcpConnections(QThread *serverThread);
@@ -27,6 +29,7 @@ public:
     int count();
     bool isReady();
     void multicastRemoveUser(QUuid);
+
 private:
     QMap<QTcpSocket*, TcpConnection*> m_connections;
     QMap<QUuid, User> onlineUsers;
@@ -42,8 +45,8 @@ private:
     DocumentFile *serverFile;
     QTimer *timer;
     bool ready = false;
-void multicastUpdateSymbol(QTcpSocket *socket, EditingMessage editMsg );
-void multicastUpdateCursor(QTcpSocket *socket, CursorPositionMessage curPosMsg );
+    void multicastUpdateSymbol(QTcpSocket *socket, EditingMessage editMsg );
+    void multicastUpdateCursor(QTcpSocket *socket, CursorPositionMessage curPosMsg );
 
 signals:
     void quitting();
@@ -59,6 +62,7 @@ protected slots:
     void moveConnectionAndOpenDocument(OpenMessage openMsg);
     void moveConnectionAndCreateDocument(DocumentMessage newDocMsg);
     void saveFile();
+
 public slots:
     void start();
     void quit();
@@ -73,6 +77,7 @@ public slots:
     void changeCursorPosition(CursorPositionMessage curPosMsg);
     void sendDocumentList(QString ownerEmail);
     void deleteFileDB(DocumentMessage doc);
+
     // Server receives the connection and push a signal to this slot. This slot accept a handle 
     // and not the socket because it is executed in other thread
     void accept(qintptr handle, TcpConnection *connection);

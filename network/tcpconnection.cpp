@@ -22,6 +22,7 @@ void TcpConnection::setSocket(QTcpSocket *socket)
     connect(m_socket,&QTcpSocket::readyRead, this, &TcpConnection::readyRead);
     connect(m_socket,&QTcpSocket::bytesWritten, this, &TcpConnection::bytesWritten);
     connect(m_socket,&QTcpSocket::stateChanged, this, &TcpConnection::stateChanged);
+
     // C++ problem: when you try to set SocketError to a slot -> socketError is abstract socket not socket
     //connect(m_socket,static_cast<void (QTcpSocket::*)(QAbstractSocket::SocketError)>(&QTcpSocket::error), this, &TcpConnection::error);
     connect(socket, QOverload<QAbstractSocket::SocketError>::of(&QAbstractSocket::error),this, &TcpConnection::error);
@@ -61,6 +62,7 @@ User TcpConnection::getUser()
 {
     return m_user;
 }
+
 // Read data from socket
 void TcpConnection::readyRead()
 {
@@ -80,7 +82,6 @@ retry:
     socketStream >> header; // try to read packet atomically
 
 
-    //qDebug()<< "Ricevuto pacchetto nel thread: " << QThread::currentThread();
     switch(header.getType())
     {
     /*case MessageType::C_TEST: {
@@ -95,6 +96,7 @@ retry:
         emit openDocument(OpenMessage());
         break;
     }*/
+
     case MessageType::C_LOGIN:
     {
         User userMessage;
@@ -238,12 +240,6 @@ retry:
             break;
         }
 
-        /*if(siteId != openMsg.getSiteId()) {
-            qDebug() << "Wrong siteId";
-            headerResponse.setType(MessageType::S_OPEN_KO);
-            replyStream << headerResponse;
-            break;
-        }*/
         qDebug() << "Received document open request";
         emit openDocument(openMsg);
 
@@ -344,7 +340,6 @@ retry:
         break;
     }
     default:{
-        qDebug() << "Unknown MessageType: wait for more data";
         if (!socketStream.commitTransaction())
             return;
     }
@@ -375,7 +370,6 @@ void TcpConnection::error(QAbstractSocket::SocketError socketError)
 {
     if(!sender()) return;
     qDebug() << this << " error "<< sender() << " error " << socketError;
-
 }
 
 // ret = 1 ok
@@ -386,7 +380,6 @@ void TcpConnection::replyLogin(int ret, User userMessage)
     Header headerResponse;
     QDataStream replyStream(m_socket);
     replyStream.setVersion(QDataStream::Qt_5_12);
-    qDebug()<<"Login user con ret "<<ret;
     if(ret==1)
     {
         qDebug()<< "User "<<userMessage.getEmail()<<" has logged correctly";
@@ -549,7 +542,7 @@ void TcpConnection::replyOpenDocument(int ret, DocumentMessage docMessage)
     replyStream.setVersion(QDataStream::Qt_5_12);
     if(ret == 1)
     {
-        qDebug() << "OPEN OK"<<" "<<docMessage.getSymbols().length();
+        qDebug() << "OPEN OK";
         headerResponse.setType(MessageType::S_OPEN_OK);
         replyStream << headerResponse << docMessage;
     }
@@ -673,7 +666,7 @@ void TcpConnection::sendOnlineUsrs(CustomMap onlineUsers)
     QDataStream replyStream(m_socket);
     replyStream.setVersion(QDataStream::Qt_5_12);
     replyStream.setVersion(QDataStream::Qt_5_12);
-    qDebug("Mando utenti online");
+    qDebug("Send online users");
     replyStream << headerResponse << onlineUsers;
 }
 
@@ -683,6 +676,6 @@ void TcpConnection::removeOnlineUser(QUuid uid)
     QDataStream replyStream(m_socket);
     replyStream.setVersion(QDataStream::Qt_5_12);
     replyStream.setVersion(QDataStream::Qt_5_12);
-    qDebug("Mando utenti online");
+    qDebug("Send users to be removed");
     replyStream << headerResponse << uid;
 }

@@ -8,38 +8,23 @@
 class User : public Serialization
 {
 public:
-
-      User(QString username, QString name, QString surname, QString email,
-           const QString &password, QByteArray image);
-
-      User(QString username, QString name, QString surname, QString email,  QByteArray image);
-
-      User(QString username, QString name, QString surname, QString email);
-
-      User(QString email, QString password);
-
-      User() = default;
-
-      QDataStream &serialize(QDataStream &stream) const override;
-
-      QDataStream &unserialize(QDataStream &stream) override;
-
-      QString &getUsername();
-
-      QString &getPassword();
-
-      QString &getName();
-
-      QString &getSurname();
-
-      QString &getEmail();
-
-      QByteArray &getImage();
-
-      QString toString();
+    User(QString username, QString name, QString surname, QString email,
+       const QString &password, QByteArray image);
+    User(QString username, QString name, QString surname, QString email,  QByteArray image);
+    User(QString username, QString name, QString surname, QString email);
+    User(QString email, QString password);
+    User() = default;
+    QDataStream &serialize(QDataStream &stream) const override;
+    QDataStream &unserialize(QDataStream &stream) override;
+    QString &getUsername();
+    QString &getPassword();
+    QString &getName();
+    QString &getSurname();
+    QString &getEmail();
+    QByteArray &getImage();
+    QString toString();
 
 private:
-
     QString username;  
     QString name;
     QString surname;

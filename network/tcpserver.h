@@ -28,11 +28,12 @@ private:
     QMap <QUuid , QThread* > threadsByDocumentId;
     void incomingConnection(qintptr descriptor); //qint64, qHandle, qintptr, uint
     void accept(qintptr descriptor, TcpConnection *connection);
-    //void addFile(QT)
+
 signals:
     void accepting(qintptr handle, TcpConnection *connection);
     void finished();
     void addExistingConnection(TcpConnection *tcpConnection);
+
 public slots:
     void complete();
     void moveConnection(TcpConnection *tcpConnection);
