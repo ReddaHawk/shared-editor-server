@@ -83,7 +83,6 @@ void TcpConnections::removeSocket(QTcpSocket *socket)
         timer->stop();
         emit commitFile(serverEditor->getSymbols());
 
-        qDebug()<<"Timer stop";
         emit closeFile(documentId);
         documentId = QUuid();
     }
@@ -168,7 +167,6 @@ void TcpConnections::startUpFile()
         docFileStream >> tempSym;
         if (docFileStream.commitTransaction()) {
             docSymbols << tempSym;
-            qDebug() << tempSym.getValue();
         } else {
             break;
         }
@@ -240,43 +238,19 @@ void TcpConnections::acceptConnection(QTcpSocket *socket, TcpConnection *connect
                                   Q_ARG(DocumentMessage, docMsg));     // parametersC
                                   */
     connection->replyOpenDocument(1,docMsg);
-    qDebug() << "------> Ho il vettore symbols " << serverEditor->getSymbols().length() << " e persone online: "<<onlineUsers.values().length();
 
     //notify new client
-
-    // TODO COMPLETE
-    // PER ora mando tutta la mappa di quelli online alla nuova persona
-    // ATTENZIONE la funzione sendOnlineUsrs è da implementare
-    // COMMENTARE PER FAR PARTIRE IL SERVER
-
     if(onlineUsers.keys().length()>0)
           connection->sendOnlineUsrs(onlineUsers);
-        /*
 
-    QMetaObject::invokeMethod(    connection,        // pointer to a QObject
-                                  "sendOnlineUsrs",       // member name (no parameters here)
-                                  Qt::QueuedConnection,     // connection type
-                                  Q_ARG(CustomMap, onlineUsers));     // parametersC
-*/
-    // Send list of current online users to new client
 
-    qDebug()<<" ######## prima"<< connection->getSiteId()<<onlineUsers.keys().length()<<" "<<onlineUsers.size();
     onlineUsers.insert(connection->getSiteId(),connection->getUser());
-    qDebug()<<" ######## dopo"<<onlineUsers.keys().length()<<" "<<onlineUsers.size();
 
     QMap<QUuid,User> newUser;
     newUser[connection->getSiteId()]=connection->getUser();
 
      multicastNotifyNewUser(connection->getSocket(),newUser);
-    /*
-    emit onlineUsrsUpdInc(onlineUsers);
 
-    QMetaObject::invokeMethod(    connection,        // pointer to a QObject
-                                  "sendOnlineUsrs",       // member name (no parameters here)
-                                  Qt::QueuedConnection,     // connection type
-                                  Q_ARG(CustomMap, onlineUsers));     // parametersC
-    //emit onlineUsrsUpdInc()
-    */
     qDebug() << this << " clients = " << count();
 }
 
@@ -323,7 +297,6 @@ void TcpConnections::moveConnectionAndOpenDocument(OpenMessage openMsg)
     DocumentEntity docEntity(openingDocId);
     DocumentMessage docMsg;
     int ret;
-    qDebug()<<"@@@@@@@@@@@@@@@@@@ Movandopen";
     if(db.open()) {
         if (findDocumentById(db, docEntity)) {
             QFile openingFile(docEntity.getPath(), this);
@@ -378,8 +351,6 @@ void TcpConnections::moveConnectionAndOpenDocument(OpenMessage openMsg)
 
 void TcpConnections::moveConnectionAndCreateDocument(DocumentMessage newDocMsg)
 {
-    qDebug()<<"@@@@@@@@@@@@@@@@@@ Movandcreate";
-
     qDebug()<< this << "moveconnection" << QThread::currentThread();
     TcpConnection *tcpConnection = qobject_cast<TcpConnection *>(sender());
     QTcpSocket *socket = tcpConnection->getSocket();
@@ -555,7 +526,6 @@ void TcpConnections::updateImgUserDB(User user, QByteArray name)
     int ret;
     if(db.open()){
         if (updateImgUser(db,user,name)) {
-             //qDebug()<< "User "<<userMessage.getEmail()<<" has logged correctly";
              ret = 1;
         } else
         {
@@ -610,11 +580,9 @@ void TcpConnections::updatePswUserDB(User user, QString oldPassword, QString new
 
 void TcpConnections::editDocument(EditingMessage editMsg)
 {
-    qDebug() << "Received" << editMsg.getOperation() << editMsg.getSymbol().getValue();
     TcpConnection *tcpConnection = qobject_cast<TcpConnection *>(sender());
     QTcpSocket *socket = tcpConnection->getSocket();
     serverEditor->process(editMsg);
-    qDebug() << "edited the file in RAM";
     multicastUpdateSymbol(socket,editMsg);
 }
 
@@ -636,7 +604,6 @@ void TcpConnections::saveFile()
 
 void TcpConnections::sendDocumentList(QString ownerEmail)
 {
-    qDebug()<<"Sono nella docList";
     TcpConnection *tcpConnection = qobject_cast<TcpConnection *>(sender());
     int ret;
     QVector<DocumentMessage> docMsgs;
@@ -659,7 +626,6 @@ void TcpConnections::sendDocumentList(QString ownerEmail)
         // Error db
         ret=-1;
     }
-    qDebug()<<"Sono nel sendDocList "<<ret;
     QMetaObject::invokeMethod(    tcpConnection,        // pointer to a QObject
                                   "replyDocumentList",       // member name (no parameters here)
                                   Qt::QueuedConnection,     // connection type
@@ -669,7 +635,6 @@ void TcpConnections::sendDocumentList(QString ownerEmail)
 
 void TcpConnections::multicastUpdateSymbol(QTcpSocket *senderSocket, EditingMessage editMsg)
 {
-    qDebug() << "multicast init";
     foreach(QTcpSocket *socket, m_connections.keys())
 
     {
@@ -681,7 +646,6 @@ void TcpConnections::multicastUpdateSymbol(QTcpSocket *senderSocket, EditingMess
                                           );     // parametersC
         }
     }
-    qDebug() << "multicast finish";
 
 
 }
@@ -725,12 +689,10 @@ void TcpConnections::multicastRemoveUser(QUuid uuid)
 
 void TcpConnections::deleteFileDB(DocumentMessage doc)
 {
-    qDebug()<<"Received delete file";
     TcpConnection *tcpConnection = qobject_cast<TcpConnection *>(sender());
     int ret;
     if(db.open()){
         if (deleteFile(db,doc)) {
-             //qDebug()<< "User "<<userMessage.getEmail()<<" has logged correctly";
             QFile *file = new QFile(documentIdToDocumentPath(documentId));
             file->remove();
              ret = 1;

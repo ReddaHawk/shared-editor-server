@@ -281,7 +281,6 @@ retry:
         if (!socketStream.commitTransaction())
             return;
 
-        qDebug() << "Received edit request";
         emit editDocument(editMsg);
         break;
 
@@ -350,7 +349,6 @@ retry:
     }
     }
 
-    qDebug() << "available bytes to read: "<<m_socket->bytesAvailable();
     if(m_socket->bytesAvailable()>0)
         goto retry;
 
@@ -673,7 +671,6 @@ void TcpConnection::sendOnlineUsrs(CustomMap onlineUsers)
     QDataStream replyStream(m_socket);
     replyStream.setVersion(QDataStream::Qt_5_12);
     replyStream.setVersion(QDataStream::Qt_5_12);
-    qDebug("Mando utenti online");
     replyStream << headerResponse << onlineUsers;
 }
 
@@ -683,6 +680,5 @@ void TcpConnection::removeOnlineUser(QUuid uid)
     QDataStream replyStream(m_socket);
     replyStream.setVersion(QDataStream::Qt_5_12);
     replyStream.setVersion(QDataStream::Qt_5_12);
-    qDebug("Mando utenti online");
     replyStream << headerResponse << uid;
 }

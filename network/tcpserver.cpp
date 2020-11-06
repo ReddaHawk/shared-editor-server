@@ -122,7 +122,6 @@ void TcpServer::moveConnection(TcpConnection *tcpConnection){
         //tcpConnections->acceptConnection(tcpConnection->getSocket(),connection);
         while(!tcpConnections->isReady())
         {
-            qDebug()<<"Non pronto";
             QThread::currentThread()->msleep(100);
         }
         QMetaObject::invokeMethod(    tcpConnections,        // pointer to a QObject
