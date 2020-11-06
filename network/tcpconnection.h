@@ -15,6 +15,7 @@
 #include "DocumentDTO.h"
 #include "db.h"
 #include "messages/messageType.h"
+
 typedef QMap<QUuid,User> CustomMap;
 
 class TcpConnection : public QObject
@@ -62,6 +63,7 @@ public slots:
     void bytesWritten(qint64 bytes);
     void stateChanged(QAbstractSocket::SocketState socketState);
     void error(QAbstractSocket::SocketError socketError);
+
     // ret = 1 ok
     // ret = 0 not ok
     // ret = -1 errDb

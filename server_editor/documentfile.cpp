@@ -3,7 +3,6 @@
 
 DocumentFile::DocumentFile(QFile *file) :file(file)
 {
-
 }
 
 DocumentFile::~DocumentFile()

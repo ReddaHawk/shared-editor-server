@@ -1,7 +1,3 @@
-//
-// Created by leonardo on 07/05/19.
-//
-
 #include "editingmessage.h"
 
 QUuid EditingMessage::getSenderSiteId() {

@@ -12,7 +12,6 @@ class Header : public Serialization
 private:
 
     MessageType type;
-
     
 public:
     

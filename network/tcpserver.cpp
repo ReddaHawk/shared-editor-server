@@ -119,7 +119,6 @@ void TcpServer::moveConnection(TcpConnection *tcpConnection){
         newThread->start();
         connection->moveToThread(newThread);
         socket->moveToThread(newThread);
-        //tcpConnections->acceptConnection(tcpConnection->getSocket(),connection);
         while(!tcpConnections->isReady())
         {
             qDebug()<<"Non pronto";

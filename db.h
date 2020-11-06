@@ -1,5 +1,6 @@
 #ifndef DB_H
 #define DB_H
+
 #include <QtSql>
 #include <iostream>
 #include "user.h"

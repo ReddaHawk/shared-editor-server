@@ -2,16 +2,13 @@
 
 OpenMessage::OpenMessage()
 {
-
 }
 
 OpenMessage::OpenMessage(QUuid siteId, QUrl uri) :
     siteId(siteId),
     uri(uri)
 {
-
 }
-
 
 QDataStream &OpenMessage::serialize(QDataStream &stream) const {
     stream << siteId << uri;

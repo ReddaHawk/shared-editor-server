@@ -7,8 +7,6 @@
 class Serialization
 {
 public:
-    //Serialization();
-
     virtual QDataStream &serialize(QDataStream &stream) const = 0;
 
     virtual QDataStream & unserialize(QDataStream &stream) = 0;

@@ -19,11 +19,6 @@ const auto INSERT_USER_SQL = QLatin1String(R"(
                       values(?, ?, ?, ?, ?, ?)
     )");
 
-const auto FIND_USER_BY_ID_SQL = QLatin1String(R"(
-                                                 SELECT user_id
-                                                 FROM users_table
-                                                 WHERE username=? OR email=?
-    )");
 const auto CHECK_USER_CREDENTIAL_SQL = QLatin1String(R"(
                                                  SELECT username, name, surname, email, image
                                                  FROM users_table
@@ -158,15 +153,6 @@ int checkCredentials(QSqlQuery &q, User &user)
     return q.size();
 }
 
-/*
- * user_id int not null auto_increment,
-                                           username varchar(50) not null,
-                                           password varchar(150) not null,
-                                           name varchar(30) not null,
-                                           surname varchar(30) not null,
-                                           email varchar(50) not null unique,
-                                           image BLOB not null,
-*/
 bool loginUser (QSqlDatabase db, User &user)
 {
     QSqlQuery q(db);
@@ -229,30 +215,7 @@ bool updatePasswordUser (QSqlDatabase db, User &user , QString &newPass){
     }
      return true;
 }
-/*
-// If -1 something goes wrong
-int userExists(QSqlQuery &q, const QString &username, QString &email)
-{
-    if (!q.prepare(FIND_USER_BY_ID_SQL))
-        return -1;
-    q.addBindValue(username);
-    q.addBindValue(email);
-    q.exec();
-    return q.size();
-}
 
-
-QSqlError populateUsersTable()
-{
-    QSqlQuery q;
-    if(userExists(q,"prova.it","") == 0)
-    addUser(q,);
-    if(userExists(q,"prova2.it") == 0)
-    addUser(q,"prova2.it","pluto","mido","yosef",QDate::currentDate(),'M');
-    return q.lastError();
-
-}
-*/
 void initCred(QString& hostnamei, QString& dbnamei, QString& porti, QString& usernamei, QString& passwordi)
 {
     hostname = hostnamei;
@@ -280,7 +243,6 @@ QSqlError initDb(QString& hostname, QString& dbname, QString& port, QString& use
 
         QStringList tables = db.tables();
 
-        // Esiste la tabella users?
         if (!tables.contains("users_table", Qt::CaseInsensitive))
         {
             qDebug() << "Users table does not exists";
@@ -289,8 +251,6 @@ QSqlError initDb(QString& hostname, QString& dbname, QString& port, QString& use
                 qDebug() << q.lastError().text();
                 return q.lastError();
             }
-            //populateUsersTable();
-
         }
         if (!tables.contains("documents_table", Qt::CaseInsensitive))
         {
@@ -382,7 +342,6 @@ int findDocumentByOwner(QSqlDatabase db, QVector<DocumentEntity> &documents, QSt
     if (ret == -1 || ret == 0) return ret;
     q.first();
     documents.clear();
-    qDebug() << "Find documents for" << ownerEmail;
     do {
         DocumentEntity document(q.value(0).toString(),
                                 q.value(1).toString(),
@@ -390,7 +349,6 @@ int findDocumentByOwner(QSqlDatabase db, QVector<DocumentEntity> &documents, QSt
                                 q.value(3).toString(),
                                 q.value(4).toString());
         documents.append(document);
-        qDebug() << "Found document" << document.getDocumentId();
     } while (q.next());
 
     return documents.size();
@@ -402,9 +360,4 @@ void setDocumentsDirectory(QString dir) {
 
 QString documentIdToDocumentPath(QUuid documentId) {
     return documentsDirectory.filePath(documentId.toString());
-}
-
-bool deleteFile(QSqlDatabase db, User &user)
-{
-
 }

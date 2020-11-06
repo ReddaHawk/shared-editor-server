@@ -17,6 +17,7 @@ private:
     QString ownerEmail;
     int counter;
     QVector<int> fractIndex;
+
 public:
     Symbol() = default;
     Symbol(QChar value, QTextCharFormat charFormat, QTextBlockFormat blockFormat, QUuid siteId, QString ownerEmail, int counter, QVector<int> &fractIndex) :

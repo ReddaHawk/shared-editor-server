@@ -11,7 +11,6 @@ private:
     QUuid siteId;
     QUrl uri;
 
-
 public:
     OpenMessage();
     OpenMessage(QUuid siteId, QUrl uri);

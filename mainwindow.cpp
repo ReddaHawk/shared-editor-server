@@ -17,7 +17,6 @@ MainWindow::MainWindow(QWidget *parent)
     }
     else
     {
-        //ui->page_3->show();
         ui->stackedWidget->setCurrentIndex(0);
         ui->lineEdit_hostname->setText("127.0.0.1");
         ui->lineEdit_dbname->setText("serverDB");
@@ -32,7 +31,6 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
-    //closeDb();
     delete ui;
 }
 
@@ -52,14 +50,12 @@ void MainWindow::on_pushButton_logindb_clicked()
     if (err.type() != QSqlError::NoError)
     {
         QMessageBox::critical(this,"dbError",err.text());
-        //this->close();
     }
     else
         {
          //Db disponibile
          QMessageBox::information(this, "Login","ok");
          ui->stackedWidget->setCurrentIndex(++indexWindow);
-        //db.close();
         }
 
 }
